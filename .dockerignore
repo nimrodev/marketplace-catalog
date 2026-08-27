@@ -1,0 +1,14 @@
+**/node_modules
+**/dist
+**/build
+**/coverage
+**/.turbo
+.git
+.env
+.env.*
+!.env.example
+localstack-data
+.omc
+docs/agents
+*.pdf
+Senior Dev Assignment - marketplace.pdf

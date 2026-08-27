@@ -1,0 +1,22 @@
+services:
+  api:
+    platform: linux/arm64
+    build:
+      context: .
+      dockerfile: infra/docker/api.Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    expose:
+      - '3000'
+
+  caddy:
+    platform: linux/arm64
+    build:
+      context: .
+      dockerfile: infra/docker/caddy.Dockerfile
+    restart: unless-stopped
+    ports:
+      - '80:80'
+    depends_on:
+      - api

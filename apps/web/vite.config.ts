@@ -9,9 +9,14 @@ export default defineConfig({
     // Caddy, so the SameSite=Lax auth cookie is sent. changeOrigin below
     // just rewrites the outgoing Host header to the API; it doesn't affect
     // what the browser sees or the cookie's SameSite behavior.
+    //
+    // The target itself is overridable because "localhost:3000" only
+    // resolves to the API when both run on the host; inside Docker Compose
+    // the API is reachable at the "api" service hostname instead.
+    host: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: process.env.API_PROXY_TARGET ?? 'http://localhost:3000',
         changeOrigin: true,
       },
     },

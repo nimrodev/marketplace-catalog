@@ -1,0 +1,78 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: marketplace
+      POSTGRES_PASSWORD: marketplace
+      POSTGRES_DB: marketplace_dev
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U marketplace -d marketplace_dev']
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/api.Dockerfile
+      target: deps
+    working_dir: /repo
+    command: pnpm --filter @marketplace/api dev
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: '3000'
+      DATABASE_URL: postgresql://marketplace:marketplace@postgres:5432/marketplace_dev
+      AWS_REGION: eu-central-1
+      # No LocalStack in this compose file yet (added in MAR-23, once S3/SQS
+      # have an actual consumer) — GET /health/ready will report SQS "down"
+      # here, which is expected, not a bug.
+      SQS_PRESCREEN_QUEUE_URL: https://sqs.eu-central-1.amazonaws.com/000000000000/dev-placeholder
+    ports:
+      - '3000:3000'
+    volumes:
+      - .:/repo
+      - api_node_modules:/repo/apps/api/node_modules
+      - web_node_modules:/repo/apps/web/node_modules
+      - shared_node_modules:/repo/packages/shared/node_modules
+      - root_node_modules:/repo/node_modules
+
+  web:
+    build:
+      context: .
+      # Not a copy-paste mistake: `deps` is the shared pnpm-workspace-install
+      # stage (all packages, api included), not api-specific. Reused here so
+      # dev only needs one `pnpm install` layer instead of a near-duplicate
+      # Dockerfile.
+      dockerfile: infra/docker/api.Dockerfile
+      target: deps
+    working_dir: /repo
+    command: pnpm --filter @marketplace/web dev
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      API_PROXY_TARGET: http://api:3000
+    ports:
+      - '5173:5173'
+    volumes:
+      - .:/repo
+      - api_node_modules:/repo/apps/api/node_modules
+      - web_node_modules:/repo/apps/web/node_modules
+      - shared_node_modules:/repo/packages/shared/node_modules
+      - root_node_modules:/repo/node_modules
+
+volumes:
+  postgres_data:
+  api_node_modules:
+  web_node_modules:
+  shared_node_modules:
+  root_node_modules:

@@ -4,6 +4,7 @@
   "private": true,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "files": ["dist"],
   "scripts": {
     "lint": "eslint . --max-warnings=0",
     "build": "tsc -p tsconfig.json",

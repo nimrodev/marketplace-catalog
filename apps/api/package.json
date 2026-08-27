@@ -2,6 +2,8 @@
   "name": "@marketplace/api",
   "version": "0.0.0",
   "private": true,
+  "main": "dist/main.js",
+  "files": ["dist"],
   "scripts": {
     "lint": "eslint . --max-warnings=0",
     "build": "nest build",

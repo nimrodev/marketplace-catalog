@@ -1,0 +1,29 @@
+# No platform pin here: docker-compose.yml sets `platform: linux/arm64` on
+# the prod api service (build target of this file) so the output always
+# matches the Graviton (arm64) EC2 deploy target, regardless of what CPU
+# actually builds it (e.g. an amd64 GitHub Actions runner) — mismatching
+# either way fails with `exec format error`, only at deploy time. Dev usage
+# of this same file (docker-compose.dev.yml) has no pin and just builds
+# native, since dev containers never deploy anywhere.
+FROM node:22-slim AS base
+RUN corepack enable
+WORKDIR /repo
+
+FROM base AS deps
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+COPY apps/api/package.json apps/api/package.json
+COPY apps/web/package.json apps/web/package.json
+COPY packages/shared/package.json packages/shared/package.json
+RUN pnpm install --frozen-lockfile
+
+FROM deps AS build
+COPY . .
+RUN pnpm --filter @marketplace/shared build
+RUN pnpm --filter @marketplace/api build
+RUN pnpm --filter @marketplace/api deploy --prod --legacy /prod/api
+
+FROM base AS api
+WORKDIR /app
+COPY --from=build /prod/api .
+EXPOSE 3000
+CMD ["node", "dist/main.js"]

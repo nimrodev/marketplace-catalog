@@ -4,3 +4,17 @@ packages:
 allowBuilds:
   '@nestjs/core': true
   esbuild: true
+# Lockfile is generated on macOS but installed inside Linux Docker containers
+# too (docker-compose.dev.yml bind-mounts source over a container-built
+# node_modules) — without this, optional native deps like rollup's platform
+# binary only get a darwin-arm64 entry and `pnpm install --frozen-lockfile`
+# inside Linux has nothing to install.
+supportedArchitectures:
+  os:
+    - darwin
+    - linux
+  cpu:
+    - arm64
+    - x64
+  libc:
+    - glibc
