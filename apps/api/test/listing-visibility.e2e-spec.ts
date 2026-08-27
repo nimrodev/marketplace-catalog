@@ -4,13 +4,9 @@ import { buildDataSourceOptions } from '../src/database/data-source-options';
 import { Listing } from '../src/listings/listing.entity';
 import { ListingsRepository, Viewer } from '../src/listings/listings.repository';
 
-// The leak test (MAR-15): visibility is enforced where the data is
-// fetched, not where the request arrives. findVisibleById's return type
-// is Listing | null — there is no code path through which it can signal
-// "exists but you can't see it" versus "does not exist". That structural
-// fact is what makes 403 impossible here, not a check that could be
-// forgotten: the (future) controller has nothing to translate but a
-// missing row, which becomes 404.
+// The leak test (MAR-15): findVisibleById returns Listing | null, so
+// there's no code path to signal "exists but hidden" vs. "doesn't
+// exist" — that's what rules out a 403 leak.
 describe('Listing visibility scoping (e2e)', () => {
   let dataSource: DataSource;
   let repo: ListingsRepository;
@@ -88,7 +84,7 @@ describe('Listing visibility scoping (e2e)', () => {
     expect(found?.id).toBe(id);
   });
 
-  it('anonymous fetching a PENDING listing by exact ID gets null, not a distinguishable forbidden signal', async () => {
+  it('anonymous fetching a PENDING listing by exact ID gets null', async () => {
     const id = await insertListing({ status: 'PENDING' });
     const found = await repo.findVisibleById(id, anonymous);
     expect(found).toBeNull();
@@ -135,19 +131,19 @@ describe('Listing visibility scoping (e2e)', () => {
     expect(found?.id).toBe(id);
   });
 
-  it('a contributor can fetch their own REJECTED listing (the "any status" claim, for the one status not yet covered)', async () => {
+  it('a contributor can fetch their own REJECTED listing', async () => {
     const id = await insertListing({ status: 'REJECTED', rejection_reason: 'x', contributor_id: ownerId });
     const found = await repo.findVisibleById(id, { role: UserRole.CONTRIBUTOR, userId: ownerId });
     expect(found?.id).toBe(id);
   });
 
-  it('a contributor cannot fetch their own soft-deleted listing (delete is moderator-only per PLAN.md — a soft-deleted listing was taken down BY a moderator, not the owner)', async () => {
+  it('a contributor cannot fetch their own soft-deleted listing', async () => {
     const id = await insertListing({ status: 'PUBLISHED', contributor_id: ownerId, deleted_at: new Date() });
     const found = await repo.findVisibleById(id, { role: UserRole.CONTRIBUTOR, userId: ownerId });
     expect(found).toBeNull();
   });
 
-  it('an admin can fetch a pending listing (spec says "moderator sees everything"; PLAN.md ranks ADMIN above MODERATOR, so this extension is intentional, not an oversight)', async () => {
+  it('an admin can fetch a pending listing', async () => {
     const id = await insertListing({ status: 'PENDING' });
     const found = await repo.findVisibleById(id, { role: UserRole.ADMIN });
     expect(found?.id).toBe(id);
