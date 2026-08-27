@@ -45,23 +45,26 @@ only ever produce a `CONTRIBUTOR` — and is deliberately out of scope.
 ## 2. Architecture
 
 ```
-                       ┌─────────────────────────────┐
-   Browser ──HTTPS──▶  │  Caddy (TLS)                │
-                       └──────┬───────────────┬──────┘
-                              │               │
-                     ┌────────▼─────┐   ┌─────▼──────────┐
-                     │  web (React) │   │  api (NestJS)  │
-                     └──────────────┘   └──┬────────┬────┘
-                                           │        │
-                     ┌─────────────────────▼──┐  ┌──▼──────────┐
-                     │  Neon Postgres         │  │ SQS         │
-                     │  (managed)             │  └──┬──────────┘
-                     └────────────────────────┘     │
-                                                ┌───▼──────────────┐
-   Browser ──presigned PUT──▶ S3 ◀──reads────── │ pre-screen worker│
-                                                └───┬──────────────┘
-                                                    │
-                                              Anthropic API
+                      ┌──────────────────────────────┐
+  Browser ──HTTPS──▶  │  Caddy (TLS)                 │
+                      │  · serves the built SPA      │
+                      │  · proxies /api/*  ──────────┼──┐
+                      └──────────────────────────────┘  │
+                                                        │
+                                            ┌───────────▼────┐
+                                            │  api (NestJS)  │
+                                            └───┬────────┬───┘
+                                                │        │
+                        ┌───────────────────────▼─┐   ┌──▼──────┐
+                        │  Neon Postgres          │   │  SQS    │
+                        │  (managed)              │   └──┬──────┘
+                        └─────────────────────────┘      │
+                                                         │
+                                            ┌────────────▼─────┐
+  Browser ──presigned PUT──▶ S3 ◀──reads──  │ pre-screen worker│
+                                            └────────┬─────────┘
+                                                     │
+                                               Anthropic API
 ```
 
 **Monorepo**
@@ -69,10 +72,22 @@ only ever produce a `CONTRIBUTOR` — and is deliberately out of scope.
 apps/api          NestJS REST API
 apps/worker       SQS consumer (pre-screen)
 apps/web          React SPA
-packages/shared   Shared types, enums, validation schemas
-docker-compose.yml        prod
-docker-compose.dev.yml    adds LocalStack + postgres
+packages/shared   Enums, field limits, and the API contract
+docker-compose.yml        prod  — api, worker, caddy
+docker-compose.dev.yml    dev   — postgres, LocalStack, api, web (Vite HMR)
 ```
+
+In production there is **no web container**: `vite build` emits static assets that are
+copied into the Caddy image, and Caddy serves them with an SPA fallback while proxying
+`/api/*` to the API. One fewer moving part, and — more importantly — the SPA and the API
+share an origin, which is what lets the auth cookie stay `SameSite=Lax`. Serving the SPA
+from S3/CloudFront would split the origin, force `SameSite=None`, and give up that CSRF
+protection; at scale the answer is CloudFront in front of *both*, not just the frontend.
+
+`packages/shared` holds the API contract — request and response types imported by both
+sides. One definition means a drift between what the API returns and what the frontend
+expects is a compile error, not a runtime surprise, and it is what allows backend and
+frontend work to proceed in parallel against mocked data.
 
 ### Decisions
 
