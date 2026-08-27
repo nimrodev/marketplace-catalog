@@ -3,14 +3,20 @@
   "version": "0.0.0",
   "private": true,
   "main": "dist/main.js",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "lint": "eslint . --max-warnings=0",
     "build": "nest build",
     "start": "node dist/main.js",
     "dev": "nest start --watch",
     "test": "jest --passWithNoTests",
-    "test:e2e": "jest --config ./test/jest-e2e.json --passWithNoTests"
+    "test:e2e": "jest --config ./test/jest-e2e.json --passWithNoTests",
+    "migration:generate": "typeorm-ts-node-commonjs migration:generate -d src/database/data-source.ts",
+    "migration:run": "typeorm-ts-node-commonjs migration:run -d src/database/data-source.ts",
+    "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/database/data-source.ts",
+    "migrate": "pnpm migration:run"
   },
   "dependencies": {
     "@marketplace/shared": "workspace:*",
@@ -24,7 +30,10 @@
     "pg": "^8.13.1",
     "@aws-sdk/client-sqs": "^3.687.0",
     "class-validator": "^0.14.1",
-    "class-transformer": "^0.5.1"
+    "class-transformer": "^0.5.1",
+    "@nestjs/typeorm": "^10.0.2",
+    "typeorm": "^0.3.20",
+    "typeorm-naming-strategies": "^4.1.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.4.5",
@@ -38,6 +47,7 @@
     "typescript": "^5.6.3",
     "@types/pg": "^8.11.10",
     "supertest": "^7.0.0",
-    "@types/supertest": "^6.0.2"
+    "@types/supertest": "^6.0.2",
+    "dotenv": "^16.4.5"
   }
 }
