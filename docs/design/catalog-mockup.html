@@ -1,0 +1,1227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Commons Catalog</title>
+<style>
+  :root {
+    /* ---- Surfaces / text ---- */
+    --bg: #EDEEE4;
+    --surface: #FAFAF4;
+    --surface-2: #F2F3E9;
+    --surface-3: #E7E8DB;
+    --text: #1C2118;
+    --text-muted: #5C6354;
+    --text-faint: #8A9080;
+    --border: #D7D8C6;
+    --border-strong: #C3C5AE;
+
+    /* ---- Brand ---- */
+    --accent: #2E5F3A;
+    --accent-strong: #234A2D;
+    --accent-soft: #DCE8DC;
+    --accent-contrast: #FFFFFF;
+    --secondary: #B8842A;
+    --secondary-soft: #F1E3C4;
+
+    /* ---- Semantic: risk ---- */
+    --risk-low: #2B8577;
+    --risk-low-soft: #DCEEEA;
+    --risk-medium: #C77C1E;
+    --risk-medium-soft: #F3E3C9;
+    --risk-high: #B23A2E;
+    --risk-high-soft: #F5DCD8;
+
+    /* ---- Semantic: status ---- */
+    --status-pending: #C77C1E;
+    --status-pending-soft: #F3E3C9;
+    --status-published: #2E5F3A;
+    --status-published-soft: #DCE8DC;
+    --status-rejected: #B23A2E;
+    --status-rejected-soft: #F5DCD8;
+
+    /* ---- Radii ---- */
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+    --radius-pill: 999px;
+
+    /* ---- Spacing scale ---- */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+    --space-6: 32px;
+    --space-7: 48px;
+    --space-8: 64px;
+
+    /* ---- Type scale ---- */
+    --text-xs: 0.75rem;
+    --text-sm: 0.8125rem;
+    --text-base: 1rem;
+    --text-md: 1.125rem;
+    --text-lg: 1.375rem;
+    --text-xl: 1.75rem;
+    --text-2xl: 2.25rem;
+    --text-3xl: 3rem;
+
+    /* ---- Type faces ---- */
+    --font-display: "Superclarendon", "Charter", "Cambria", serif;
+    --font-body: "Avenir Next", "Futura", sans-serif;
+    --font-mono: "Menlo", "Consolas", monospace;
+
+    /* ---- Photo tint pairs (card placeholders) ---- */
+    --photo-green-a: #2E5F3A;
+    --photo-green-b: #8FBE8E;
+    --photo-gold-a: #B8842A;
+    --photo-gold-b: #E7C878;
+    --photo-slate-a: #4B5A5B;
+    --photo-slate-b: #93A6A7;
+    --photo-clay-a: #9C5638;
+    --photo-clay-b: #D19A78;
+  }
+
+  /* ---- Dark tokens: scoped only, never relied on for page chrome ---- */
+  .theme-dark {
+    --bg: #14180F;
+    --surface: #1D2318;
+    --surface-2: #242B1D;
+    --surface-3: #2B331F;
+    --text: #E8EAD9;
+    --text-muted: #9CA38C;
+    --text-faint: #6E7562;
+    --border: #333B28;
+    --border-strong: #414B33;
+    --accent: #6FBB74;
+    --accent-strong: #8ED193;
+    --accent-soft: #24361F;
+    --accent-contrast: #10150C;
+    --secondary: #E0AA4C;
+    --secondary-soft: #3A2F17;
+    --risk-low: #52C9B5;
+    --risk-low-soft: #173430;
+    --risk-medium: #E3A83E;
+    --risk-medium-soft: #3A2C13;
+    --risk-high: #E2685A;
+    --risk-high-soft: #3A1C17;
+    --status-pending: #E3A83E;
+    --status-pending-soft: #3A2C13;
+    --status-published: #6FBB74;
+    --status-published-soft: #24361F;
+    --status-rejected: #E2685A;
+    --status-rejected-soft: #3A1C17;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: var(--text-base);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+
+  h1, h2, h3 { font-family: var(--font-display); font-weight: 700; margin: 0; text-wrap: balance; color: var(--text); }
+  p { margin: 0; }
+  a { color: inherit; }
+  button { font-family: inherit; }
+
+  ::selection { background: var(--accent-soft); color: var(--accent-strong); }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 var(--space-6); }
+
+  /* ---------------- Top nav ---------------- */
+  .topnav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .topnav-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: var(--space-3) var(--space-6);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: baseline; gap: var(--space-2); }
+  .brand-mark {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-md);
+    letter-spacing: 0.01em;
+  }
+  .brand-tag {
+    font-size: var(--text-xs);
+    color: var(--text-faint);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-left: 1px solid var(--border-strong);
+    padding-left: var(--space-2);
+  }
+  .navlinks { display: flex; gap: var(--space-1); flex-wrap: wrap; }
+  .navlinks a {
+    text-decoration: none;
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-pill);
+    letter-spacing: 0.02em;
+    transition: background-color 120ms ease, color 120ms ease;
+  }
+  .navlinks a:hover, .navlinks a:focus-visible {
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    outline: none;
+  }
+
+  /* ---------------- Header ---------------- */
+  .intro { padding: var(--space-8) 0 var(--space-6); }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-xs);
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--secondary);
+    font-weight: 600;
+    margin-bottom: var(--space-3);
+  }
+  .eyebrow::before {
+    content: "";
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--secondary);
+    display: inline-block;
+  }
+  .intro h1 { font-size: var(--text-3xl); letter-spacing: -0.01em; }
+  .intro .lede {
+    max-width: 62ch;
+    color: var(--text-muted);
+    font-size: var(--text-md);
+    margin-top: var(--space-4);
+  }
+  .intro .meta-note {
+    margin-top: var(--space-5);
+    padding: var(--space-4) var(--space-5);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+    max-width: 68ch;
+  }
+  .meta-note strong { color: var(--text); }
+
+  /* ---------------- Section shell ---------------- */
+  section.block { padding: var(--space-8) 0; border-top: 1px solid var(--border); }
+  .block-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: var(--space-5);
+    margin-bottom: var(--space-6);
+    flex-wrap: wrap;
+  }
+  .block-head h2 { font-size: var(--text-2xl); }
+  .block-head .caption { color: var(--text-muted); font-size: var(--text-sm); max-width: 46ch; }
+
+  /* ---------------- Catalog grid ---------------- */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: var(--space-5);
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    border-color: var(--border-strong);
+    box-shadow: 0 12px 28px -18px rgba(28, 33, 24, 0.35);
+  }
+  .photo {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.92);
+  }
+  .photo.tint-green  { background: linear-gradient(155deg, var(--photo-green-a), var(--photo-green-b)); }
+  .photo.tint-gold   { background: linear-gradient(155deg, var(--photo-gold-a), var(--photo-gold-b)); }
+  .photo.tint-slate  { background: linear-gradient(155deg, var(--photo-slate-a), var(--photo-slate-b)); }
+  .photo.tint-clay   { background: linear-gradient(155deg, var(--photo-clay-a), var(--photo-clay-b)); }
+  .photo svg { width: 46%; height: 46%; opacity: 0.9; }
+  .photo::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(115deg, rgba(255,255,255,0.05) 0 2px, transparent 2px 14px);
+    pointer-events: none;
+  }
+  .photo-count {
+    position: absolute;
+    bottom: var(--space-2);
+    right: var(--space-2);
+    background: rgba(15,18,12,0.55);
+    color: #fff;
+    font-size: 0.6875rem;
+    padding: 2px 7px;
+    border-radius: var(--radius-pill);
+    letter-spacing: 0.02em;
+  }
+  .ribbon {
+    position: absolute;
+    top: var(--space-2);
+    left: var(--space-2);
+    background: rgba(15,18,12,0.62);
+    color: #fff;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: var(--radius-pill);
+  }
+  .card-body { padding: var(--space-4) var(--space-4) var(--space-5); display: flex; flex-direction: column; gap: var(--space-2); flex: 1; }
+  .cat-row { display: flex; align-items: center; gap: 6px; color: var(--text-faint); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.06em; }
+  .cat-row svg { width: 13px; height: 13px; opacity: 0.8; }
+  .card-title { font-size: var(--text-base); font-weight: 600; line-height: 1.3; }
+  .price-row { display: flex; align-items: baseline; gap: var(--space-2); margin-top: auto; padding-top: var(--space-2); }
+  .price { font-family: var(--font-display); font-size: var(--text-lg); font-weight: 700; color: var(--accent-strong); }
+  .price-tag { font-size: var(--text-xs); color: var(--secondary); font-weight: 600; }
+  .badge-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    padding: 3px 9px;
+    border-radius: var(--radius-pill);
+    border: 1px solid transparent;
+  }
+  .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; }
+
+  /* condition badges: ordered neutral -> accent intensity, encodes rank */
+  .badge-condition { background: var(--surface-2); color: var(--text-muted); border-color: var(--border); }
+  .badge-condition::before { background: var(--text-faint); }
+  .badge-condition.cond-new       { background: var(--accent); color: var(--accent-contrast); border-color: var(--accent); }
+  .badge-condition.cond-new::before { background: var(--accent-contrast); }
+  .badge-condition.cond-like_new  { background: var(--accent-soft); color: var(--accent-strong); border-color: var(--accent); }
+  .badge-condition.cond-like_new::before { background: var(--accent); }
+  .badge-condition.cond-good      { background: var(--surface-2); color: var(--text); border-color: var(--border-strong); }
+  .badge-condition.cond-good::before { background: var(--text-muted); }
+  .badge-condition.cond-fair      { background: var(--surface-2); color: var(--text-muted); border-color: var(--border); }
+  .badge-condition.cond-fair::before { background: var(--text-faint); }
+  .badge-condition.cond-for_parts { background: transparent; color: var(--text-faint); border: 1px dashed var(--border-strong); }
+  .badge-condition.cond-for_parts::before { background: transparent; border: 1px dashed var(--text-faint); width:5px; height:5px; }
+
+  .badge-risk-low    { background: var(--risk-low-soft);    color: var(--risk-low); }
+  .badge-risk-low::before    { background: var(--risk-low); }
+  .badge-risk-medium { background: var(--risk-medium-soft); color: var(--risk-medium); }
+  .badge-risk-medium::before { background: var(--risk-medium); }
+  .badge-risk-high   { background: var(--risk-high-soft);   color: var(--risk-high); }
+  .badge-risk-high::before   { background: var(--risk-high); }
+
+  .badge-status-pending   { background: var(--status-pending-soft);   color: var(--status-pending); }
+  .badge-status-pending::before   { background: var(--status-pending); }
+  .badge-status-published { background: var(--status-published-soft); color: var(--status-published); }
+  .badge-status-published::before { background: var(--status-published); }
+  .badge-status-rejected  { background: var(--status-rejected-soft);  color: var(--status-rejected); }
+  .badge-status-rejected::before  { background: var(--status-rejected); }
+
+  /* ---------------- Filter bar ---------------- */
+  .filter-demo { display: flex; flex-direction: column; gap: var(--space-6); }
+  .filter-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .filter-panel-label {
+    padding: var(--space-3) var(--space-5);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-faint);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+  .filter-panel-body { padding: var(--space-5); }
+
+  .pill-row { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border-strong);
+    background: var(--surface-2);
+    font-size: var(--text-sm);
+    color: var(--text);
+  }
+  .pill.is-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); font-weight: 600; }
+  .pill svg { width: 12px; height: 12px; opacity: 0.6; }
+
+  .field-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-5); }
+  .field label {
+    display: block;
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-faint);
+    margin-bottom: var(--space-2);
+    font-weight: 600;
+  }
+  .field .control {
+    border: 1px solid var(--border-strong);
+    background: var(--surface-2);
+    border-radius: var(--radius-sm);
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .range-inputs { display: flex; align-items: center; gap: var(--space-2); }
+  .range-inputs .control { flex: 1; }
+
+  .checkbox-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-3); margin-top: var(--space-2); }
+  .checkbox-row { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); }
+  .checkbox-row .box { width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--border-strong); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--surface); }
+  .checkbox-row.checked .box { background: var(--accent); border-color: var(--accent); }
+  .checkbox-row.checked .box::after { content: ""; width: 7px; height: 4px; border-left: 2px solid var(--accent-contrast); border-bottom: 2px solid var(--accent-contrast); transform: rotate(-45deg) translate(0, -1px); }
+
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding-top: var(--space-4); margin-top: var(--space-4); border-top: 1px solid var(--border); }
+  .toggle { width: 38px; height: 22px; border-radius: var(--radius-pill); background: var(--accent); position: relative; flex-shrink: 0; }
+  .toggle::after { content: ""; position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--accent-contrast); }
+
+  .filter-actions { display: flex; justify-content: flex-end; gap: var(--space-3); margin-top: var(--space-5); }
+  .btn {
+    padding: var(--space-2) var(--space-5);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text);
+    cursor: default;
+  }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+  .btn-ghost { background: transparent; border-color: transparent; color: var(--text-muted); }
+  .btn-danger { background: transparent; border-color: var(--risk-high); color: var(--risk-high); }
+
+  /* ---------------- Item detail ---------------- */
+  .detail-layout { display: grid; grid-template-columns: minmax(260px, 480px) 1fr; gap: var(--space-7); align-items: start; }
+  .gallery-main { border-radius: var(--radius-lg); overflow: hidden; aspect-ratio: 4/3; }
+  .thumb-row { display: flex; gap: var(--space-2); margin-top: var(--space-3); }
+  .thumb { width: 64px; height: 64px; border-radius: var(--radius-sm); overflow: hidden; border: 2px solid transparent; }
+  .thumb.is-active { border-color: var(--accent); }
+  .thumb .photo, .gallery-main .photo { width: 100%; height: 100%; aspect-ratio: auto; }
+  .thumb svg { width: 55%; height: 55%; }
+
+  .detail-title { font-size: var(--text-2xl); margin-bottom: var(--space-2); }
+  .detail-price-row { display: flex; align-items: baseline; gap: var(--space-3); margin: var(--space-3) 0 var(--space-4); }
+  .detail-price { font-family: var(--font-display); font-size: var(--text-2xl); font-weight: 700; color: var(--accent-strong); }
+  .detail-negotiable { font-size: var(--text-sm); color: var(--secondary); font-weight: 600; }
+  .detail-min { font-size: var(--text-xs); color: var(--text-faint); }
+
+  .detail-desc { color: var(--text-muted); font-size: var(--text-base); max-width: 60ch; margin: var(--space-5) 0; }
+  .detail-section-label { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-faint); font-weight: 600; margin-bottom: var(--space-3); }
+  .option-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-6); }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--border); font-size: var(--text-sm); }
+  .chip svg { width: 14px; height: 14px; color: var(--accent); }
+
+  .contributor-card { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-md); }
+  .avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--accent); color: var(--accent-contrast); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 700; font-size: var(--text-md); flex-shrink: 0; }
+  .contributor-name { font-weight: 600; font-size: var(--text-sm); }
+  .contributor-sub { font-size: var(--text-xs); color: var(--text-faint); }
+
+  .detail-meta-row { display: flex; gap: var(--space-5); margin-top: var(--space-5); font-size: var(--text-xs); color: var(--text-faint); flex-wrap: wrap; }
+  .detail-meta-row strong { color: var(--text-muted); font-weight: 600; }
+
+  /* ---------------- Moderation table ---------------- */
+  .mod-table { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; background: var(--surface); }
+  .mod-row { display: grid; grid-template-columns: 56px 1.6fr 1fr 1.2fr 100px 140px; gap: var(--space-4); align-items: center; padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--border); }
+  .mod-row:last-child { border-bottom: none; }
+  .mod-row-head { background: var(--surface-2); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-faint); font-weight: 600; padding: var(--space-3) var(--space-5); }
+  .mod-thumb { width: 44px; height: 44px; border-radius: var(--radius-sm); overflow: hidden; }
+  .mod-thumb .photo { width: 100%; height: 100%; aspect-ratio: auto; }
+  .mod-thumb svg { width: 55%; height: 55%; }
+  .mod-title { font-weight: 600; font-size: var(--text-sm); }
+  .mod-sub { font-size: var(--text-xs); color: var(--text-faint); margin-top: 2px; }
+  .mod-cat { font-size: var(--text-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .mod-price { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: var(--text-sm); color: var(--text); margin-top: 2px; }
+  .mod-submitter { font-size: var(--text-xs); color: var(--text-muted); }
+  .mod-time { font-size: var(--text-xs); color: var(--text-faint); font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .mod-actions { display: flex; gap: var(--space-2); justify-self: end; }
+  .mod-actions .btn { padding: 6px 14px; font-size: var(--text-xs); }
+
+  .risk-detail { grid-column: 1 / -1; background: var(--risk-high-soft); border-top: 1px dashed var(--risk-high); padding: var(--space-4) var(--space-5); margin: var(--space-3) calc(var(--space-5) * -1) calc(var(--space-4) * -1); border-radius: 0 0 var(--radius-md) var(--radius-md); }
+  .risk-detail-head { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3); font-size: var(--text-xs); color: var(--risk-high); }
+  .risk-detail-head strong { font-family: var(--font-mono); }
+  .risk-list { display: flex; flex-direction: column; gap: var(--space-2); font-size: var(--text-sm); color: var(--text); margin: 0; padding: 0; list-style: none; }
+  .risk-list li { display: flex; gap: var(--space-2); }
+  .risk-list li::before { content: "—"; color: var(--risk-high); flex-shrink: 0; }
+  .flag-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: var(--space-3); }
+  .flag { font-family: var(--font-mono); font-size: 0.6875rem; background: var(--surface); border: 1px solid var(--risk-high); color: var(--risk-high); padding: 2px 8px; border-radius: var(--radius-sm); }
+
+  /* ---------------- Theme comparison ---------------- */
+  .theme-compare { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-5); }
+  .theme-panel { border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden; background: var(--bg); }
+  .theme-panel-label {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: var(--space-3) var(--space-5);
+    font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;
+    color: var(--text-muted); background: var(--surface); border-bottom: 1px solid var(--border);
+  }
+  .theme-panel-body { padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-4); }
+  .mini-nav { display: flex; align-items: center; justify-content: space-between; padding-bottom: var(--space-3); border-bottom: 1px solid var(--border); }
+  .mini-nav .brand-mark { font-size: var(--text-sm); }
+  .mini-cards { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+  .mini-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; }
+  .mini-card .photo { aspect-ratio: 4/3; }
+  .mini-card .card-body { padding: var(--space-3); gap: 6px; }
+  .mini-card .card-title { font-size: var(--text-sm); }
+  .mini-card .price { font-size: var(--text-base); }
+  .mini-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  /* ---------------- Token palette ---------------- */
+  .token-group { margin-bottom: var(--space-7); }
+  .token-group:last-child { margin-bottom: 0; }
+  .token-group-title { font-size: var(--text-sm); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: var(--space-4); }
+  .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--space-3); }
+  .swatch { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; background: var(--surface); }
+  .swatch-color { height: 56px; }
+  .swatch-info { padding: var(--space-2) var(--space-3) var(--space-3); }
+  .swatch-name { font-family: var(--font-mono); font-size: 0.6875rem; color: var(--text); display: block; }
+  .swatch-hex { font-family: var(--font-mono); font-size: 0.6875rem; color: var(--text-faint); display: block; margin-top: 2px; }
+
+  .scale-row { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-3); }
+  .scale-bar { background: var(--accent); border-radius: 4px; height: 14px; }
+  .scale-label { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); width: 190px; flex-shrink: 0; }
+
+  .type-row { display: flex; align-items: baseline; gap: var(--space-5); padding: var(--space-3) 0; border-bottom: 1px solid var(--border); }
+  .type-row:last-child { border-bottom: none; }
+  .type-row .type-label { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-faint); width: 190px; flex-shrink: 0; }
+  .type-row .type-sample { font-family: var(--font-display); color: var(--text); }
+
+  .radii-row { display: flex; gap: var(--space-5); flex-wrap: wrap; }
+  .radii-item { text-align: center; }
+  .radii-box { width: 72px; height: 72px; background: var(--accent-soft); border: 1.5px solid var(--accent); margin-bottom: var(--space-2); }
+  .radii-label { font-family: var(--font-mono); font-size: 0.6875rem; color: var(--text-muted); }
+
+  footer { padding: var(--space-7) 0 var(--space-8); border-top: 1px solid var(--border); color: var(--text-faint); font-size: var(--text-xs); }
+
+  @media (max-width: 860px) {
+    .detail-layout { grid-template-columns: 1fr; }
+    .theme-compare { grid-template-columns: 1fr; }
+    .mod-row { grid-template-columns: 44px 1fr; }
+    .mod-row > *:nth-child(3), .mod-row > *:nth-child(4), .mod-row > *:nth-child(5) { display: none; }
+    .mod-actions { grid-column: 1 / -1; justify-self: start; margin-top: var(--space-2); }
+  }
+  @media (max-width: 600px) {
+    .wrap { padding: 0 var(--space-4); }
+    .topnav-inner { padding: var(--space-3) var(--space-4); }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ============ ICON DEFS (reused inline) ============ -->
+  <svg width="0" height="0" style="position:absolute">
+    <defs>
+      <g id="icon-furniture" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="8" y="10" width="32" height="30" rx="2"/>
+        <line x1="8" y1="24" x2="40" y2="24"/>
+        <circle cx="18" cy="17" r="1.6" fill="currentColor" stroke="none"/>
+        <circle cx="30" cy="17" r="1.6" fill="currentColor" stroke="none"/>
+        <circle cx="18" cy="31" r="1.6" fill="currentColor" stroke="none"/>
+        <circle cx="30" cy="31" r="1.6" fill="currentColor" stroke="none"/>
+      </g>
+      <g id="icon-vehicles" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="13" cy="32" r="7"/>
+        <circle cx="35" cy="32" r="7"/>
+        <path d="M13 32 L21 16 L29 16 M13 32 L29 16 M29 16 L35 32 M21 16 L26 22 L35 32"/>
+        <path d="M17 12 h6"/>
+      </g>
+      <g id="icon-garden" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 24 L16 40 H32 L36 24 Z"/>
+        <path d="M24 24 C24 24 24 12 24 9 C24 9 16 9 16 17 C16 21 24 24 24 24 Z"/>
+        <path d="M24 24 C24 24 24 14 24 12 C24 12 32 13 32 20 C32 23 24 24 24 24 Z"/>
+      </g>
+      <g id="icon-electronics" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 26 a14 14 0 0 1 28 0"/>
+        <rect x="8" y="26" width="9" height="13" rx="3"/>
+        <rect x="31" y="26" width="9" height="13" rx="3"/>
+      </g>
+      <g id="icon-toys" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+        <rect x="9" y="22" width="13" height="13" rx="1.5"/>
+        <rect x="26" y="22" width="13" height="13" rx="1.5"/>
+        <rect x="17" y="9" width="13" height="13" rx="1.5"/>
+      </g>
+      <g id="icon-clothing" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M24 8 v4"/>
+        <path d="M24 12 L10 22 L14 27 L18 24 V38 H30 V24 L34 27 L38 22 Z"/>
+      </g>
+      <g id="icon-sports" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M24 10 L40 38 H8 Z"/>
+        <path d="M24 10 L24 38"/>
+        <path d="M6 38 H42"/>
+      </g>
+      <g id="icon-other" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 17 L24 9 L40 17 L24 25 Z"/>
+        <path d="M8 17 V33 L24 41 L40 33 V17"/>
+        <path d="M24 25 V41"/>
+      </g>
+      <g id="icon-delivery" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="7" width="11" height="8" rx="1"/>
+        <path d="M14 10 h4 l3 3 v2 h-7 z"/>
+        <circle cx="7" cy="17" r="1.6"/>
+        <circle cx="18" cy="17" r="1.6"/>
+      </g>
+      <g id="icon-pickup" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 21 c0-6 3.5-11 7-11 s7 5 7 11 c0 4-7 10-7 10 s-7-6-7-10z"/>
+        <circle cx="17" cy="10.5" r="2.4"/>
+      </g>
+      <g id="icon-check" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 12 l6 6 L20 6"/>
+      </g>
+      <g id="icon-x" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+        <path d="M6 6 L18 18 M18 6 L6 18"/>
+      </g>
+    </defs>
+  </svg>
+
+  <nav class="topnav">
+    <div class="topnav-inner">
+      <div class="brand">
+        <span class="brand-mark">The Commons</span>
+        <span class="brand-tag">Catalog</span>
+      </div>
+      <div class="navlinks">
+        <a href="#grid">Catalog Grid</a>
+        <a href="#filters">Filters</a>
+        <a href="#detail">Item Detail</a>
+        <a href="#moderation">Moderation</a>
+        <a href="#themes">Light &amp; Dark</a>
+        <a href="#tokens">Tokens</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="wrap">
+    <header class="intro">
+      <div class="eyebrow">MAR-49 · Design reference, not shippable code</div>
+      <h1>The Commons Catalog</h1>
+      <p class="lede">
+        A static visual mockup for the neighborhood listings catalog — contributors post
+        secondhand goods, moderators review before anything goes live. This page shows the
+        intended look for the catalog grid, filters, item detail, and moderation queue, plus
+        the token palette that MAR-36 will implement in code.
+      </p>
+      <div class="meta-note">
+        <strong>How to read this page.</strong> Every section below is a static snapshot —
+        nothing here is wired to the API or interactive. Filter states, badges, and theme
+        panels that would normally toggle are instead shown side by side so every state is
+        visible at once. Field names and enum values match <code>packages/shared</code> exactly.
+      </div>
+    </header>
+
+    <!-- ============ 1. CATALOG GRID ============ -->
+    <section class="block" id="grid">
+      <div class="block-head">
+        <div>
+          <h2>Catalog Grid</h2>
+          <p class="caption">The main browse view. One card per listing: photo, category, title, condition, price.</p>
+        </div>
+      </div>
+      <div class="grid">
+
+        <article class="card">
+          <div class="photo tint-clay">
+            <svg viewBox="0 0 48 48"><use href="#icon-furniture"/></svg>
+            <span class="photo-count">1 / 3</span>
+          </div>
+          <div class="card-body">
+            <div class="cat-row"><svg viewBox="0 0 48 48"><use href="#icon-furniture"/></svg>Furniture</div>
+            <div class="card-title">Mid-Century Oak Dresser</div>
+            <div class="badge-row">
+              <span class="badge badge-condition cond-good">Good</span>
+            </div>
+            <div class="price-row"><span class="price">₪450</span></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="photo tint-slate">
+            <svg viewBox="0 0 48 48"><use href="#icon-vehicles"/></svg>
+            <span class="photo-count">1 / 5</span>
+          </div>
+          <div class="card-body">
+            <div class="cat-row"><svg viewBox="0 0 48 48"><use href="#icon-vehicles"/></svg>Vehicles</div>
+            <div class="card-title">Trek Hybrid Bicycle, 21-speed</div>
+            <div class="badge-row">
+              <span class="badge badge-condition cond-like_new">Like New</span>
+            </div>
+            <div class="price-row"><span class="price">₪1,200</span><span class="price-tag">Negotiable</span></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="photo tint-green">
+            <svg viewBox="0 0 48 48"><use href="#icon-garden"/></svg>
+            <span class="photo-count">1 / 2</span>
+          </div>
+          <div class="card-body">
+            <div class="cat-row"><svg viewBox="0 0 48 48"><use href="#icon-garden"/></svg>Home &amp; Garden</div>
+            <div class="card-title">Cast-Iron Plant Stand Set</div>
+            <div class="badge-row">
+              <span class="badge badge-condition cond-new">New</span>
+            </div>
+            <div class="price-row"><span class="price">₪180</span></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="photo tint-slate">
+            <svg viewBox="0 0 48 48"><use href="#icon-electronics"/></svg>
+            <span class="ribbon">For parts</span>
+            <span class="photo-count">1 / 4</span>
+          </div>
+          <div class="card-body">
+            <div class="cat-row"><svg viewBox="0 0 48 48"><use href="#icon-electronics"/></svg>Electronics</div>
+            <div class="card-title">Sony Noise-Cancelling Headphones</div>
+            <div class="badge-row">
+              <span class="badge badge-condition cond-for_parts">For Parts</span>
+            </div>
+            <div class="price-row"><span class="price">₪45</span></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="photo tint-gold">
+            <svg viewBox="0 0 48 48"><use href="#icon-toys"/></svg>
+            <span class="photo-count">1 / 3</span>
+          </div>
+          <div class="card-body">
+            <div class="cat-row"><svg viewBox="0 0 48 48"><use href="#icon-toys"/></svg>Toys &amp; Games</div>
+            <div class="card-title">Wooden Building Block Set, 120pc</div>
+            <div class="badge-row">
+              <span class="badge badge-condition cond-good">Good</span>
+            </div>
+            <div class="price-row"><span class="price">₪90</span></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="photo tint-clay">
+            <svg viewBox="0 0 48 48"><use href="#icon-clothing"/></svg>
+            <span class="photo-count">1 / 2</span>
+          </div>
+          <div class="card-body">
+            <div class="cat-row"><svg viewBox="0 0 48 48"><use href="#icon-clothing"/></svg>Clothing</div>
+            <div class="card-title">Men's Denim Jacket, Size L</div>
+            <div class="badge-row">
+              <span class="badge badge-condition cond-fair">Fair</span>
+            </div>
+            <div class="price-row"><span class="price">₪60</span></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="photo tint-green">
+            <svg viewBox="0 0 48 48"><use href="#icon-sports"/></svg>
+            <span class="photo-count">1 / 4</span>
+          </div>
+          <div class="card-body">
+            <div class="cat-row"><svg viewBox="0 0 48 48"><use href="#icon-sports"/></svg>Sports &amp; Outdoors</div>
+            <div class="card-title">4-Person Camping Tent</div>
+            <div class="badge-row">
+              <span class="badge badge-condition cond-like_new">Like New</span>
+            </div>
+            <div class="price-row"><span class="price">₪250</span></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="photo tint-gold">
+            <svg viewBox="0 0 48 48"><use href="#icon-other"/></svg>
+            <span class="photo-count">1 / 3</span>
+          </div>
+          <div class="card-body">
+            <div class="cat-row"><svg viewBox="0 0 48 48"><use href="#icon-other"/></svg>Other</div>
+            <div class="card-title">Assorted Ceramic Planters (Set of 3)</div>
+            <div class="badge-row">
+              <span class="badge badge-condition cond-good">Good</span>
+            </div>
+            <div class="price-row"><span class="price">₪75</span></div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ============ 2. FILTER BAR ============ -->
+    <section class="block" id="filters">
+      <div class="block-head">
+        <div>
+          <h2>Filter Bar</h2>
+          <p class="caption">Collapsed and expanded states shown together — this is static, the real component toggles between them.</p>
+        </div>
+      </div>
+      <div class="filter-demo">
+
+        <div class="filter-panel">
+          <div class="filter-panel-label">Collapsed state</div>
+          <div class="filter-panel-body">
+            <div class="pill-row">
+              <span class="pill">Category: All</span>
+              <span class="pill">Condition: All</span>
+              <span class="pill">₪0 – ₪1,500</span>
+              <span class="pill">Sort: Newest</span>
+              <span class="pill is-primary">More filters ▾</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="filter-panel">
+          <div class="filter-panel-label">Expanded state</div>
+          <div class="filter-panel-body">
+            <div class="field-grid">
+              <div class="field">
+                <label>Category</label>
+                <div class="control">All categories <svg width="10" height="10" viewBox="0 0 48 48"><use href="#icon-check"/></svg></div>
+              </div>
+              <div class="field">
+                <label>Condition</label>
+                <div class="control">All conditions <svg width="10" height="10" viewBox="0 0 48 48"><use href="#icon-check"/></svg></div>
+              </div>
+              <div class="field">
+                <label>Price range</label>
+                <div class="range-inputs">
+                  <div class="control">₪0</div>
+                  <span style="color:var(--text-faint)">–</span>
+                  <div class="control">₪1,500</div>
+                </div>
+              </div>
+              <div class="field">
+                <label>Sort by</label>
+                <div class="control">Newest first <svg width="10" height="10" viewBox="0 0 48 48"><use href="#icon-check"/></svg></div>
+              </div>
+            </div>
+
+            <div style="margin-top: var(--space-5);">
+              <label style="display:block;font-size:var(--text-xs);text-transform:uppercase;letter-spacing:0.06em;color:var(--text-faint);font-weight:600;margin-bottom:var(--space-2);">Options</label>
+              <div class="checkbox-grid">
+                <span class="checkbox-row checked"><span class="box"></span>Delivery available</span>
+                <span class="checkbox-row"><span class="box"></span>Local pickup</span>
+                <span class="checkbox-row"><span class="box"></span>Open to trades</span>
+                <span class="checkbox-row"><span class="box"></span>Original packaging</span>
+                <span class="checkbox-row"><span class="box"></span>Warranty included</span>
+                <span class="checkbox-row"><span class="box"></span>Bundle deal</span>
+              </div>
+            </div>
+
+            <div class="toggle-row">
+              <span style="font-size: var(--text-sm);">Negotiable listings only</span>
+              <span class="toggle"></span>
+            </div>
+
+            <div class="filter-actions">
+              <span class="btn btn-ghost">Clear all</span>
+              <span class="btn btn-primary">Apply filters</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============ 3. ITEM DETAIL ============ -->
+    <section class="block" id="detail">
+      <div class="block-head">
+        <div>
+          <h2>Item Detail</h2>
+          <p class="caption">Full field set for a single listing, as a contributor or browser would see a published item.</p>
+        </div>
+      </div>
+
+      <div class="detail-layout">
+        <div>
+          <div class="gallery-main">
+            <div class="photo tint-clay">
+              <svg viewBox="0 0 48 48" style="width:32%;height:32%;"><use href="#icon-furniture"/></svg>
+            </div>
+          </div>
+          <div class="thumb-row">
+            <div class="thumb is-active"><div class="photo tint-clay"><svg viewBox="0 0 48 48"><use href="#icon-furniture"/></svg></div></div>
+            <div class="thumb"><div class="photo tint-clay"><svg viewBox="0 0 48 48"><use href="#icon-furniture"/></svg></div></div>
+            <div class="thumb"><div class="photo tint-clay"><svg viewBox="0 0 48 48"><use href="#icon-furniture"/></svg></div></div>
+            <div class="thumb"><div class="photo tint-clay"><svg viewBox="0 0 48 48"><use href="#icon-furniture"/></svg></div></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="badge-row" style="margin-bottom: var(--space-3);">
+            <span class="badge badge-status-published">Published</span>
+            <span class="badge badge-condition cond-good">Good</span>
+          </div>
+          <h3 class="detail-title">Mid-Century Oak Dresser</h3>
+          <div class="cat-row"><svg viewBox="0 0 48 48"><use href="#icon-furniture"/></svg>Furniture</div>
+
+          <div class="detail-price-row">
+            <span class="detail-price">₪450</span>
+            <span class="detail-negotiable">Negotiable</span>
+          </div>
+          <div class="detail-min">Minimum accepted: ₪380</div>
+
+          <p class="detail-desc">
+            Solid oak six-drawer dresser from the early 1970s. Refinished top, original brass
+            pulls, drawers glide smoothly. A couple of small scuffs on the left side panel,
+            pictured. Roughly 150cm wide — measure your doorway before coming by.
+          </p>
+
+          <div class="detail-section-label">Options</div>
+          <div class="option-chips">
+            <span class="chip"><svg viewBox="0 0 24 24"><use href="#icon-delivery"/></svg>Delivery available</span>
+            <span class="chip"><svg viewBox="0 0 24 24"><use href="#icon-pickup"/></svg>Local pickup</span>
+          </div>
+
+          <div class="detail-section-label">Contributor</div>
+          <div class="contributor-card">
+            <div class="avatar">D</div>
+            <div>
+              <div class="contributor-name">Dana K.</div>
+              <div class="contributor-sub">Member since Feb 2025 · 12 listings</div>
+            </div>
+          </div>
+
+          <div class="detail-meta-row">
+            <span><strong>Listed</strong> Aug 14, 2026</span>
+            <span><strong>Published</strong> Aug 15, 2026</span>
+            <span><strong>Status</strong> Published</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 4. MODERATION QUEUE ============ -->
+    <section class="block" id="moderation">
+      <div class="block-head">
+        <div>
+          <h2>Moderation Queue</h2>
+          <p class="caption">Pending listings awaiting review, with an AI-assisted risk badge. Expanded row shows the risk detail a moderator would see.</p>
+        </div>
+      </div>
+
+      <div class="mod-table">
+        <div class="mod-row mod-row-head">
+          <span></span>
+          <span>Listing</span>
+          <span>Category / Price</span>
+          <span>Submitted</span>
+          <span>Risk</span>
+          <span></span>
+        </div>
+
+        <div class="mod-row">
+          <div class="mod-thumb"><div class="photo tint-green"><svg viewBox="0 0 48 48"><use href="#icon-garden"/></svg></div></div>
+          <div>
+            <div class="mod-title">Cast-Iron Plant Stand Set</div>
+            <div class="mod-sub">New · Home &amp; Garden</div>
+          </div>
+          <div>
+            <div class="mod-cat">Home &amp; Garden</div>
+            <div class="mod-price">₪180</div>
+          </div>
+          <div>
+            <div class="mod-submitter">rina.g@example.com</div>
+            <div class="mod-time">Aug 26, 09:14</div>
+          </div>
+          <div><span class="badge badge-risk-low">Low</span></div>
+          <div class="mod-actions">
+            <span class="btn btn-primary"><svg width="11" height="11" viewBox="0 0 24 24" style="margin-right:4px;vertical-align:-1px;"><use href="#icon-check"/></svg>Approve</span>
+            <span class="btn btn-danger">Reject</span>
+          </div>
+        </div>
+
+        <div class="mod-row">
+          <div class="mod-thumb"><div class="photo tint-slate"><svg viewBox="0 0 48 48"><use href="#icon-vehicles"/></svg></div></div>
+          <div>
+            <div class="mod-title">Trek Hybrid Bicycle, 21-speed</div>
+            <div class="mod-sub">Like New · Vehicles</div>
+          </div>
+          <div>
+            <div class="mod-cat">Vehicles</div>
+            <div class="mod-price">₪1,200</div>
+          </div>
+          <div>
+            <div class="mod-submitter">omer.b@example.com</div>
+            <div class="mod-time">Aug 26, 11:02</div>
+          </div>
+          <div><span class="badge badge-risk-medium">Medium</span></div>
+          <div class="mod-actions">
+            <span class="btn btn-primary"><svg width="11" height="11" viewBox="0 0 24 24" style="margin-right:4px;vertical-align:-1px;"><use href="#icon-check"/></svg>Approve</span>
+            <span class="btn btn-danger">Reject</span>
+          </div>
+        </div>
+
+        <div class="mod-row" style="flex-direction:column; align-items:stretch; display:flex;">
+          <div class="mod-row" style="grid-template-columns: 56px 1.6fr 1fr 1.2fr 100px 140px; border-bottom:none; padding:var(--space-4) var(--space-5);">
+            <div class="mod-thumb"><div class="photo tint-slate"><svg viewBox="0 0 48 48"><use href="#icon-electronics"/></svg></div></div>
+            <div>
+              <div class="mod-title">Sony Noise-Cancelling Headphones</div>
+              <div class="mod-sub">For Parts · Electronics</div>
+            </div>
+            <div>
+              <div class="mod-cat">Electronics</div>
+              <div class="mod-price">₪45</div>
+            </div>
+            <div>
+              <div class="mod-submitter">yossi.t@example.com</div>
+              <div class="mod-time">Aug 26, 13:47</div>
+            </div>
+            <div><span class="badge badge-risk-high">High</span></div>
+            <div class="mod-actions">
+              <span class="btn btn-primary"><svg width="11" height="11" viewBox="0 0 24 24" style="margin-right:4px;vertical-align:-1px;"><use href="#icon-check"/></svg>Approve</span>
+              <span class="btn btn-danger">Reject</span>
+            </div>
+          </div>
+          <div class="risk-detail">
+            <div class="risk-detail-head">
+              Flagged by <strong>claude-3-5-haiku-moderation</strong> · evaluated Aug 26, 13:47:32
+            </div>
+            <ul class="risk-list">
+              <li>Listed price is over 70% below the median for this category and condition.</li>
+              <li>Description text closely matches a template seen across 4 other recent submissions.</li>
+              <li>Only one photo provided; product photos appear to be a stock image, not the item itself.</li>
+            </ul>
+            <div class="flag-row">
+              <span class="flag">price_anomaly</span>
+              <span class="flag">duplicate_description</span>
+              <span class="flag">stock_photo_suspected</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 5. LIGHT & DARK ============ -->
+    <section class="block" id="themes">
+      <div class="block-head">
+        <div>
+          <h2>Light &amp; Dark Mode</h2>
+          <p class="caption">
+            Both palettes rendered explicitly, side by side, in scoped containers — not a
+            toggle, and not dependent on this viewer's OS theme setting.
+          </p>
+        </div>
+      </div>
+
+      <div class="theme-compare">
+        <div class="theme-panel">
+          <div class="theme-panel-label">Light <span>Default</span></div>
+          <div class="theme-panel-body">
+            <div class="mini-nav">
+              <span class="brand-mark">The Commons</span>
+              <span style="font-size:var(--text-xs); color:var(--text-faint);">Catalog</span>
+            </div>
+            <div class="mini-cards">
+              <div class="mini-card">
+                <div class="photo tint-green"><svg viewBox="0 0 48 48"><use href="#icon-garden"/></svg></div>
+                <div class="card-body">
+                  <div class="card-title">Plant Stand Set</div>
+                  <div class="mini-badges"><span class="badge badge-condition cond-new">New</span></div>
+                  <div class="price-row"><span class="price">₪180</span></div>
+                </div>
+              </div>
+              <div class="mini-card">
+                <div class="photo tint-slate"><svg viewBox="0 0 48 48"><use href="#icon-vehicles"/></svg></div>
+                <div class="card-body">
+                  <div class="card-title">Hybrid Bicycle</div>
+                  <div class="mini-badges"><span class="badge badge-condition cond-like_new">Like New</span></div>
+                  <div class="price-row"><span class="price">₪1,200</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="mini-badges">
+              <span class="badge badge-risk-low">Low</span>
+              <span class="badge badge-risk-medium">Medium</span>
+              <span class="badge badge-risk-high">High</span>
+              <span class="badge badge-status-pending">Pending</span>
+              <span class="badge badge-status-published">Published</span>
+              <span class="badge badge-status-rejected">Rejected</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="theme-panel theme-dark">
+          <div class="theme-panel-label">Dark</div>
+          <div class="theme-panel-body">
+            <div class="mini-nav">
+              <span class="brand-mark">The Commons</span>
+              <span style="font-size:var(--text-xs); color:var(--text-faint);">Catalog</span>
+            </div>
+            <div class="mini-cards">
+              <div class="mini-card">
+                <div class="photo tint-green"><svg viewBox="0 0 48 48"><use href="#icon-garden"/></svg></div>
+                <div class="card-body">
+                  <div class="card-title">Plant Stand Set</div>
+                  <div class="mini-badges"><span class="badge badge-condition cond-new">New</span></div>
+                  <div class="price-row"><span class="price">₪180</span></div>
+                </div>
+              </div>
+              <div class="mini-card">
+                <div class="photo tint-slate"><svg viewBox="0 0 48 48"><use href="#icon-vehicles"/></svg></div>
+                <div class="card-body">
+                  <div class="card-title">Hybrid Bicycle</div>
+                  <div class="mini-badges"><span class="badge badge-condition cond-like_new">Like New</span></div>
+                  <div class="price-row"><span class="price">₪1,200</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="mini-badges">
+              <span class="badge badge-risk-low">Low</span>
+              <span class="badge badge-risk-medium">Medium</span>
+              <span class="badge badge-risk-high">High</span>
+              <span class="badge badge-status-pending">Pending</span>
+              <span class="badge badge-status-published">Published</span>
+              <span class="badge badge-status-rejected">Rejected</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 6. TOKEN PALETTE ============ -->
+    <section class="block" id="tokens">
+      <div class="block-head">
+        <div>
+          <h2>Token Palette</h2>
+          <p class="caption">The exact values MAR-36 implements — colors, spacing, type scale, radii. No drift allowed.</p>
+        </div>
+      </div>
+
+      <div class="token-group">
+        <div class="token-group-title">Color — surfaces &amp; text (light)</div>
+        <div class="swatch-grid">
+          <div class="swatch"><div class="swatch-color" style="background:#EDEEE4"></div><div class="swatch-info"><span class="swatch-name">--bg</span><span class="swatch-hex">#EDEEE4</span></div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#FAFAF4"></div><div class="swatch-info"><span class="swatch-name">--surface</span><span class="swatch-hex">#FAFAF4</span></div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#F2F3E9"></div><div class="swatch-info"><span class="swatch-name">--surface-2</span><span class="swatch-hex">#F2F3E9</span></div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#D7D8C6"></div><div class="swatch-info"><span class="swatch-name">--border</span><span class="swatch-hex">#D7D8C6</span></div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#1C2118"></div><div class="swatch-info"><span class="swatch-name">--text</span><span class="swatch-hex">#1C2118</span></div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#5C6354"></div><div class="swatch-info"><span class="swatch-name">--text-muted</span><span class="swatch-hex">#5C6354</span></div></div>
+        </div>
+      </div>
+
+      <div class="token-group">
+        <div class="token-group-title">Color — surfaces &amp; text (dark)</div>
+        <div class="swatch-grid">
+          <div class="swatch"><div class="swatch-color" style="background:#14180F"></div><div class="swatch-info"><span class="swatch-name">--bg</span><span class="swatch-hex">#14180F</span></div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#1D2318"></div><div class="swatch-info"><span class="swatch-name">--surface</span><span class="swatch-hex">#1D2318</span></div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#242B1D"></div><div class="swatch-info"><span class="swatch-name">--surface-2</span><span class="swatch-hex">#242B1D</span></div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#333B28"></div><div class="swatch-info"><span class="swatch-name">--border</span><span class="swatch-hex">#333B28</span></div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#E8EAD9"></div><div class="swatch-info"><span class="swatch-name">--text</span><span class="swatch-hex">#E8EAD9</span></div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#9CA38C"></div><div class="swatch-info"><span class="swatch-name">--text-muted</span><span class="swatch-hex">#9CA38C</span></div></div>
+        </div>
+      </div>
+
+      <div class="token-group">
+        <div class="token-group-title">Color — brand</div>
+        <div class="swatch-grid">
+          <div class="swatch"><div class="swatch-color" style="background:#2E5F3A"></div><div class="swatch-info"><span class="swatch-name">--accent</span><span class="swatch-hex">#2E5F3A</span></div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#DCE8DC"></div><div class="swatch-info"><span class="swatch-name">--accent-soft</span><span class="swatch-hex">#DCE8DC</span></div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#B8842A"></div><div class="swatch-info"><span class="swatch-name">--secondary</span><span class="swatch-hex">#B8842A</span></div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#6FBB74"></div><div class="swatch-info"><span class="swatch-name">--accent (dark)</span><span class="swatch-hex">#6FBB74</span></div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#E0AA4C"></div><div class="swatch-info"><span class="swatch-name">--secondary (dark)</span><span class="swatch-hex">#E0AA4C</span></div></div>
+        </div>
+      </div>
+
+      <div class="token-group">
+        <div class="token-group-title">Color — semantic (risk &amp; status)</div>
+        <div class="swatch-grid">
+          <div class="swatch"><div class="swatch-color" style="background:#2B8577"></div><div class="swatch-info"><span class="swatch-name">--risk-low</span><span class="swatch-hex">#2B8577</span></div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#C77C1E"></div><div class="swatch-info"><span class="swatch-name">--risk-medium</span><span class="swatch-hex">#C77C1E</span></div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#B23A2E"></div><div class="swatch-info"><span class="swatch-name">--risk-high</span><span class="swatch-hex">#B23A2E</span></div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#C77C1E"></div><div class="swatch-info"><span class="swatch-name">--status-pending</span><span class="swatch-hex">#C77C1E</span></div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#2E5F3A"></div><div class="swatch-info"><span class="swatch-name">--status-published</span><span class="swatch-hex">#2E5F3A</span></div></div>
+          <div class="swatch"><div class="swatch-color" style="background:#B23A2E"></div><div class="swatch-info"><span class="swatch-name">--status-rejected</span><span class="swatch-hex">#B23A2E</span></div></div>
+        </div>
+      </div>
+
+      <div class="token-group">
+        <div class="token-group-title">Spacing scale</div>
+        <div>
+          <div class="scale-row"><span class="scale-label">--space-1 · 4px</span><span class="scale-bar" style="width:4px;"></span></div>
+          <div class="scale-row"><span class="scale-label">--space-2 · 8px</span><span class="scale-bar" style="width:8px;"></span></div>
+          <div class="scale-row"><span class="scale-label">--space-3 · 12px</span><span class="scale-bar" style="width:12px;"></span></div>
+          <div class="scale-row"><span class="scale-label">--space-4 · 16px</span><span class="scale-bar" style="width:16px;"></span></div>
+          <div class="scale-row"><span class="scale-label">--space-5 · 24px</span><span class="scale-bar" style="width:24px;"></span></div>
+          <div class="scale-row"><span class="scale-label">--space-6 · 32px</span><span class="scale-bar" style="width:32px;"></span></div>
+          <div class="scale-row"><span class="scale-label">--space-7 · 48px</span><span class="scale-bar" style="width:48px;"></span></div>
+          <div class="scale-row"><span class="scale-label">--space-8 · 64px</span><span class="scale-bar" style="width:64px;"></span></div>
+        </div>
+      </div>
+
+      <div class="token-group">
+        <div class="token-group-title">Type scale</div>
+        <div>
+          <div class="type-row"><span class="type-label">--text-xs · 12px</span><span class="type-sample" style="font-size:0.75rem;">Category · Condition · Meta</span></div>
+          <div class="type-row"><span class="type-label">--text-sm · 13px</span><span class="type-sample" style="font-size:0.8125rem;">Body copy, filter labels</span></div>
+          <div class="type-row"><span class="type-label">--text-base · 16px</span><span class="type-sample" style="font-size:1rem;">Card titles, description</span></div>
+          <div class="type-row"><span class="type-label">--text-md · 18px</span><span class="type-sample" style="font-size:1.125rem;">Section subheads</span></div>
+          <div class="type-row"><span class="type-label">--text-lg · 22px</span><span class="type-sample" style="font-size:1.375rem;">Card price</span></div>
+          <div class="type-row"><span class="type-label">--text-xl · 28px</span><span class="type-sample" style="font-size:1.75rem;">Detail title</span></div>
+          <div class="type-row"><span class="type-label">--text-2xl · 36px</span><span class="type-sample" style="font-size:2.25rem;">Section headings</span></div>
+          <div class="type-row"><span class="type-label">--text-3xl · 48px</span><span class="type-sample" style="font-size:3rem;">Page title</span></div>
+        </div>
+      </div>
+
+      <div class="token-group">
+        <div class="token-group-title">Border radii</div>
+        <div class="radii-row">
+          <div class="radii-item"><div class="radii-box" style="border-radius:6px;"></div><div class="radii-label">--radius-sm · 6px</div></div>
+          <div class="radii-item"><div class="radii-box" style="border-radius:12px;"></div><div class="radii-label">--radius-md · 12px</div></div>
+          <div class="radii-item"><div class="radii-box" style="border-radius:20px;"></div><div class="radii-label">--radius-lg · 20px</div></div>
+          <div class="radii-item"><div class="radii-box" style="border-radius:999px;"></div><div class="radii-label">--radius-pill · full</div></div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      Static design reference for MAR-49 — not part of the <code>apps/web</code> build. Field
+      names and enum values sourced from <code>packages/shared/src/enums.ts</code>,
+      <code>listings.ts</code>, and <code>moderation.ts</code>. Component implementation is MAR-36.
+    </footer>
+  </div>
+
+</body>
+</html>
