@@ -13,6 +13,8 @@ export type Viewer =
   | { role: UserRole.CONTRIBUTOR; userId: string }
   | { role: UserRole.MODERATOR | UserRole.ADMIN };
 
+const PUBLISHED_VISIBLE = 'listing.status = :published AND listing.deletedAt IS NULL';
+
 // Enforces visibility where the data is fetched, not where the request
 // arrives (MAR-15): every accessor on this repository must route through
 // here, so there is no query path that can hand back an unpublished
@@ -34,19 +36,20 @@ function scopeToVisible(qb: SelectQueryBuilder<Listing>, viewer: Viewer): Select
     // an inline OR here would escape any preceding AND (e.g. the id
     // filter in findVisibleById) rather than staying scoped to this
     // condition. Brackets is what actually groups it — caught live by a
-    // failing leak test, not assumed.
+    // failing leak test, not assumed. The AND-pair is nested in its own
+    // inner Brackets too: today it's correct relying on AND-before-OR
+    // precedence alone, but that's a silent footgun for whoever edits
+    // this next — nesting makes the grouping explicit instead of implicit.
     return qb.andWhere(
       new Brackets((sub) => {
         sub
-          .where('listing.status = :published AND listing.deletedAt IS NULL', { published: ListingStatus.PUBLISHED })
+          .where(new Brackets((inner) => inner.where(PUBLISHED_VISIBLE, { published: ListingStatus.PUBLISHED })))
           .orWhere('listing.contributorId = :userId', { userId: viewer.userId });
       }),
     );
   }
 
-  return qb.andWhere('listing.status = :published AND listing.deletedAt IS NULL', {
-    published: ListingStatus.PUBLISHED,
-  });
+  return qb.andWhere(PUBLISHED_VISIBLE, { published: ListingStatus.PUBLISHED });
 }
 
 export class ListingsRepository {

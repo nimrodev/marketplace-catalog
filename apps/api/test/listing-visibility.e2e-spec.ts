@@ -135,6 +135,24 @@ describe('Listing visibility scoping (e2e)', () => {
     expect(found?.id).toBe(id);
   });
 
+  it('a contributor can fetch their own REJECTED listing (the "any status" claim, for the one status not yet covered)', async () => {
+    const id = await insertListing({ status: 'REJECTED', rejection_reason: 'x', contributor_id: ownerId });
+    const found = await repo.findVisibleById(id, { role: UserRole.CONTRIBUTOR, userId: ownerId });
+    expect(found?.id).toBe(id);
+  });
+
+  it('a contributor can fetch their own soft-deleted listing (documented judgement call, not spec-mandated — pinned here so a behavior change is deliberate, not silent)', async () => {
+    const id = await insertListing({ status: 'PUBLISHED', contributor_id: ownerId, deleted_at: new Date() });
+    const found = await repo.findVisibleById(id, { role: UserRole.CONTRIBUTOR, userId: ownerId });
+    expect(found?.id).toBe(id);
+  });
+
+  it('an admin can fetch a pending listing (spec says "moderator sees everything"; PLAN.md ranks ADMIN above MODERATOR, so this extension is intentional, not an oversight)', async () => {
+    const id = await insertListing({ status: 'PENDING' });
+    const found = await repo.findVisibleById(id, { role: UserRole.ADMIN });
+    expect(found?.id).toBe(id);
+  });
+
   it('a moderator can fetch a pending listing', async () => {
     const id = await insertListing({ status: 'PENDING' });
     const found = await repo.findVisibleById(id, moderator);
