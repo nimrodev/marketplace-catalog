@@ -3,6 +3,7 @@ packages:
   - packages/*
 allowBuilds:
   '@nestjs/core': true
+  bcrypt: true
   esbuild: true
 # Lockfile is generated on macOS but installed inside Linux Docker containers
 # too (docker-compose.dev.yml bind-mounts source over a container-built

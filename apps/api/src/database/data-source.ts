@@ -2,6 +2,15 @@
 // revert). Runs outside Nest's DI, so env vars are loaded directly here
 // rather than through ConfigModule — same file precedence Nest uses
 // (app.module.ts), first file wins.
+//
+// In production, invoke the compiled form directly rather than through
+// `pnpm run migration:run` — the deployed image is a pruned `pnpm deploy`
+// output with no src/ and an unresolved workspace:* reference, so any
+// `pnpm run <script>` fails its pre-run dependency check there before the
+// script body even executes. The working command, verified against the
+// actual built image: `node_modules/.bin/typeorm-ts-node-commonjs
+// migration:run -d dist/database/data-source.js` (same pattern as
+// seed.ts's `node dist/database/seed.js`).
 import { config } from 'dotenv';
 config({ path: '../../.env.local' });
 config({ path: '.env' });

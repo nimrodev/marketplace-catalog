@@ -16,7 +16,8 @@
     "migration:generate": "typeorm-ts-node-commonjs migration:generate -d src/database/data-source.ts",
     "migration:run": "typeorm-ts-node-commonjs migration:run -d src/database/data-source.ts",
     "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/database/data-source.ts",
-    "migrate": "pnpm migration:run"
+    "migrate": "pnpm migration:run",
+    "seed": "node dist/database/seed.js"
   },
   "dependencies": {
     "@marketplace/shared": "workspace:*",
@@ -33,7 +34,10 @@
     "class-transformer": "^0.5.1",
     "@nestjs/typeorm": "^10.0.2",
     "typeorm": "^0.3.20",
-    "typeorm-naming-strategies": "^4.1.0"
+    "typeorm-naming-strategies": "^4.1.0",
+    "dotenv": "^16.4.5",
+    "bcrypt": "^5.1.1",
+    "@faker-js/faker": "^9.2.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.4.5",
@@ -48,6 +52,6 @@
     "@types/pg": "^8.11.10",
     "supertest": "^7.0.0",
     "@types/supertest": "^6.0.2",
-    "dotenv": "^16.4.5"
+    "@types/bcrypt": "^5.0.2"
   }
 }
