@@ -26,3 +26,9 @@ localstack-data/
 # planning artifacts and the assignment brief — not part of the submission
 *.pdf
 LINEAR-BACKLOG.md
+.neon
+.agents/
+.env.local
+CLAUDE.md
+.claude/
+skills-lock.json

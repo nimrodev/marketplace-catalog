@@ -12,7 +12,33 @@ purchasing.
 |---|---|
 | Public (anonymous) | Browse published listings, view detail pages |
 | Contributor | Create listings, edit own listings, view own listings in any status |
-| Moderator | View all listings in all statuses, approve/reject, edit/delete any item, manage users |
+| Moderator | View all listings in all statuses, approve/reject, edit or delete any listing |
+| Admin | Everything a moderator can do, plus user management |
+
+Roles are **ranked rather than parallel**:
+
+```
+CONTRIBUTOR (0)  <  MODERATOR (1)  <  ADMIN (2)
+```
+
+The guard compares rank, so `@Roles(MODERATOR)` admits an admin without every
+moderation route having to name both. That is the entire implementation cost of the
+third role — the alternative, `@Roles(MODERATOR, ADMIN)` repeated across routes and
+tests, is where role systems rot as they grow.
+
+### How accounts are created
+
+There is **no public sign-up**. This is a curated catalog: accounts are provisioned by
+an admin, not self-served.
+
+- The **first admin comes from the seed** — nothing else can create it, and its
+  credentials serve as demo access
+- Everyone else is created through `POST /users`, which is admin-only
+- Separating admin from moderator keeps user provisioning out of reach of the people
+  who moderate content; a moderator cannot mint accounts
+
+Self-registration is the obvious extension — a public `POST /auth/register` that can
+only ever produce a `CONTRIBUTOR` — and is deliberately out of scope.
 
 ---
 
@@ -94,7 +120,7 @@ docker-compose.dev.yml    adds LocalStack + postgres
 
 ### Tables
 
-**users** — `id, email (unique), password_hash, role (CONTRIBUTOR|MODERATOR), is_active, created_at`
+**users** — `id, email (unique), password_hash, role (CONTRIBUTOR|MODERATOR|ADMIN), is_active, created_at`
 
 **listings**
 ```
@@ -205,9 +231,9 @@ GET    /moderation/queue                moderator; pending, risk-sorted
 POST   /moderation/:id/approve          moderator
 POST   /moderation/:id/reject           moderator; { reason }
 
-GET    /users                           moderator
-POST   /users                           moderator; { email, password, role }
-PATCH  /users/:id/deactivate            moderator
+GET    /users                           admin
+POST   /users                           admin; { email, password, role }
+PATCH  /users/:id/deactivate            admin
 
 POST   /ai/draft-listing                contributor; { photoKeys[] } → draft fields
 
