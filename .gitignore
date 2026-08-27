@@ -32,3 +32,7 @@ LINEAR-BACKLOG.md
 CLAUDE.md
 .claude/
 skills-lock.json
+
+# agent tooling — not part of the submission
+docs/agents/
+*.tsbuildinfo
