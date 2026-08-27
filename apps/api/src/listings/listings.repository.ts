@@ -2,9 +2,6 @@ import { Brackets, Repository, SelectQueryBuilder } from 'typeorm';
 import { ListingStatus, UserRole } from '@marketplace/shared';
 import { Listing } from './listing.entity';
 
-// Plain class, not a NestJS @Injectable — no module needs the DI wiring
-// yet (that lands with MAR-21's controller).
-
 export type Viewer =
   | { role: null }
   | { role: UserRole.CONTRIBUTOR; userId: string }
