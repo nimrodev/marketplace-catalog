@@ -1,0 +1,28 @@
+node_modules/
+dist/
+build/
+coverage/
+.turbo/
+
+# env — never commit
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# editor / os
+.DS_Store
+.idea/
+.vscode/
+
+# local tooling state
+.omc/
+localstack-data/
+
+# planning artifacts and the assignment brief — not part of the submission
+*.pdf
+LINEAR-BACKLOG.md
