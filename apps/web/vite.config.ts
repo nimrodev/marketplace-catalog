@@ -3,6 +3,19 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  server: {
+    // The browser only ever talks to localhost:5173 here — the proxy makes
+    // /api same-origin from its point of view, matching production behind
+    // Caddy, so the SameSite=Lax auth cookie is sent. changeOrigin below
+    // just rewrites the outgoing Host header to the API; it doesn't affect
+    // what the browser sees or the cookie's SameSite behavior.
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+    },
+  },
   build: {
     // packages/shared is pnpm-workspace-linked, not a real node_modules
     // install, so Rollup's default commonjs interop skips it and named

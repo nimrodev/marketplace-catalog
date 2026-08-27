@@ -28,6 +28,9 @@ export default [
         'warn',
         { argsIgnorePattern: '^_', ignoreRestSiblings: true },
       ],
+      // tsc already catches undefined identifiers with full type info;
+      // base no-undef can't see ambient/DOM types used as type annotations.
+      'no-undef': 'off',
     },
   },
   {
