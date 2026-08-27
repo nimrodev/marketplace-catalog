@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { HealthModule } from './health/health.module';
+import { ListingsModule } from './listings/listings.module';
 import { envValidationSchema } from './config/env.validation';
 import { buildDataSourceOptions } from './database/data-source-options';
 
@@ -25,6 +26,7 @@ import { buildDataSourceOptions } from './database/data-source-options';
       useFactory: (config: ConfigService) => buildDataSourceOptions(config.getOrThrow('DATABASE_URL')),
     }),
     HealthModule,
+    ListingsModule,
   ],
   controllers: [AppController],
   providers: [],
