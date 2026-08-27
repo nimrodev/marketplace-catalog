@@ -13,43 +13,41 @@ export type Viewer =
   | { role: UserRole.CONTRIBUTOR; userId: string }
   | { role: UserRole.MODERATOR | UserRole.ADMIN };
 
-const PUBLISHED_VISIBLE = 'listing.status = :published AND listing.deletedAt IS NULL';
+const NOT_DELETED = 'listing.deletedAt IS NULL';
+const IS_PUBLISHED = 'listing.status = :published';
 
 // Enforces visibility where the data is fetched, not where the request
 // arrives (MAR-15): every accessor on this repository must route through
 // here, so there is no query path that can hand back an unpublished
 // listing to an unauthorised viewer.
 //
-// Contributors see their own listings in ANY status per the issue's
-// literal wording — that is read here as "any value of the status
-// column", not as also overriding deleted_at. A contributor's own
-// soft-deleted listing is untested by the acceptance criteria; this
-// implementation leaves it visible to its owner. Worth flagging as a
-// judgement call, not a settled spec answer.
+// Delete is moderator-only (PLAN.md §soft-delete) — a soft-deleted
+// listing was taken down BY a moderator, not by its owner, so deleted_at
+// is a hard exclusion for everyone except moderator/admin, including the
+// listing's own contributor. "Contributors see their own listings in any
+// status" (the issue's wording) is read as "any value of the status
+// column" — deleted_at is a separate axis, not a status value, and isn't
+// covered by that grant.
 function scopeToVisible(qb: SelectQueryBuilder<Listing>, viewer: Viewer): SelectQueryBuilder<Listing> {
   if (viewer.role === UserRole.MODERATOR || viewer.role === UserRole.ADMIN) {
     return qb;
   }
 
   if (viewer.role === UserRole.CONTRIBUTOR) {
-    // TypeORM does not wrap a raw andWhere() string in its own parens, so
-    // an inline OR here would escape any preceding AND (e.g. the id
-    // filter in findVisibleById) rather than staying scoped to this
-    // condition. Brackets is what actually groups it — caught live by a
-    // failing leak test, not assumed. The AND-pair is nested in its own
-    // inner Brackets too: today it's correct relying on AND-before-OR
-    // precedence alone, but that's a silent footgun for whoever edits
-    // this next — nesting makes the grouping explicit instead of implicit.
-    return qb.andWhere(
+    // NOT_DELETED as its own andWhere() keeps it a single top-level AND
+    // term (TypeORM wraps each where()/andWhere() call in its own parens),
+    // so it can't be pulled into the OR below by accident — no Brackets
+    // nesting needed for this part, only for the status/owner OR itself.
+    return qb.andWhere(NOT_DELETED).andWhere(
       new Brackets((sub) => {
         sub
-          .where(new Brackets((inner) => inner.where(PUBLISHED_VISIBLE, { published: ListingStatus.PUBLISHED })))
+          .where(IS_PUBLISHED, { published: ListingStatus.PUBLISHED })
           .orWhere('listing.contributorId = :userId', { userId: viewer.userId });
       }),
     );
   }
 
-  return qb.andWhere(PUBLISHED_VISIBLE, { published: ListingStatus.PUBLISHED });
+  return qb.andWhere(NOT_DELETED).andWhere(IS_PUBLISHED, { published: ListingStatus.PUBLISHED });
 }
 
 export class ListingsRepository {

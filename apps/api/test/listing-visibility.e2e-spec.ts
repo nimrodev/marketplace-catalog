@@ -141,10 +141,10 @@ describe('Listing visibility scoping (e2e)', () => {
     expect(found?.id).toBe(id);
   });
 
-  it('a contributor can fetch their own soft-deleted listing (documented judgement call, not spec-mandated — pinned here so a behavior change is deliberate, not silent)', async () => {
+  it('a contributor cannot fetch their own soft-deleted listing (delete is moderator-only per PLAN.md — a soft-deleted listing was taken down BY a moderator, not the owner)', async () => {
     const id = await insertListing({ status: 'PUBLISHED', contributor_id: ownerId, deleted_at: new Date() });
     const found = await repo.findVisibleById(id, { role: UserRole.CONTRIBUTOR, userId: ownerId });
-    expect(found?.id).toBe(id);
+    expect(found).toBeNull();
   });
 
   it('an admin can fetch a pending listing (spec says "moderator sees everything"; PLAN.md ranks ADMIN above MODERATOR, so this extension is intentional, not an oversight)', async () => {
