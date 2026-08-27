@@ -1,6 +1,7 @@
 {
   "name": "marketplace-catalog",
   "private": true,
+  "packageManager": "pnpm@11.4.0",
   "engines": {
     "node": ">=20"
   },
