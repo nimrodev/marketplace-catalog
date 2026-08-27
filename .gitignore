@@ -36,3 +36,6 @@ skills-lock.json
 # agent tooling — not part of the submission
 docs/agents/
 *.tsbuildinfo
+
+# EC2 private key — never commit
+infra/ec2/*.pem
