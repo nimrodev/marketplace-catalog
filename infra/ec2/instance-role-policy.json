@@ -1,0 +1,37 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PhotoBucketReadWrite",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject"],
+      "Resource": "arn:aws:s3:::marketplace-catalog-photos/*"
+    },
+    {
+      "Sid": "PrescreenQueueAndDlq",
+      "Effect": "Allow",
+      "Action": [
+        "sqs:SendMessage",
+        "sqs:ReceiveMessage",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes"
+      ],
+      "Resource": [
+        "arn:aws:sqs:eu-central-1:515048574975:marketplace-prescreen",
+        "arn:aws:sqs:eu-central-1:515048574975:marketplace-prescreen-dlq"
+      ]
+    },
+    {
+      "Sid": "ProdSsmParameters",
+      "Effect": "Allow",
+      "Action": ["ssm:GetParameter", "ssm:GetParameters", "ssm:GetParametersByPath"],
+      "Resource": "arn:aws:ssm:eu-central-1:515048574975:parameter/marketplace/prod/*"
+    },
+    {
+      "Sid": "AppLogGroup",
+      "Effect": "Allow",
+      "Action": ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"],
+      "Resource": "arn:aws:logs:eu-central-1:515048574975:log-group:/marketplace/prod:*"
+    }
+  ]
+}
