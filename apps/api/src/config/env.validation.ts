@@ -12,9 +12,9 @@ export const envValidationSchema = Joi.object({
   SQS_PRESCREEN_QUEUE_URL: Joi.string().uri().required(),
   SQS_ENDPOINT: Joi.string().uri().optional(),
   S3_PHOTOS_BUCKET: Joi.string().required(),
-  // Only for local dev/CI, where nothing supplies ambient credentials. In
-  // production the EC2 instance role provides them automatically (MAR-43)
-  // — these must stay unset there, never a real static key on the box.
+  S3_ENDPOINT: Joi.string().uri().optional(),
+  S3_PUBLIC_ENDPOINT: Joi.string().uri().optional(),
+  // Local dev/CI (LocalStack) only — production uses the EC2 instance role.
   AWS_ACCESS_KEY_ID: Joi.string().optional(),
   AWS_SECRET_ACCESS_KEY: Joi.string().optional(),
   JWT_SECRET: Joi.string().required(),

@@ -29,20 +29,29 @@ jobs:
           --health-timeout 3s
           --health-retries 15
 
+      localstack:
+        image: localstack/localstack:3
+        env:
+          SERVICES: s3,sqs
+          AWS_DEFAULT_REGION: eu-central-1
+        ports:
+          - 4566:4566
+        options: >-
+          --health-cmd "curl -f http://localhost:4566/_localstack/health"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+
     env:
       NODE_ENV: test
       DATABASE_URL: postgresql://marketplace:marketplace@localhost:5432/marketplace_ci
       AWS_REGION: eu-central-1
-      # No LocalStack yet (added in MAR-23) — the readiness check correctly
-      # reports SQS "down" against this placeholder, which is fine: the e2e
-      # suite only asserts on response shape, not a specific status.
-      SQS_PRESCREEN_QUEUE_URL: https://sqs.eu-central-1.amazonaws.com/000000000000/ci-placeholder
-      S3_PHOTOS_BUCKET: ci-placeholder-bucket
-      # Presigning is pure local SigV4 math — no network call to AWS — so
-      # any syntactically valid key pair lets it succeed. Never used against
-      # a real bucket; the CI runner has no other AWS credentials at all.
-      AWS_ACCESS_KEY_ID: AKIAIOSFODNN7CIDUMMY
-      AWS_SECRET_ACCESS_KEY: ci-dummy-secret-not-a-real-aws-key
+      SQS_PRESCREEN_QUEUE_URL: http://localhost:4566/000000000000/marketplace-prescreen
+      SQS_ENDPOINT: http://localhost:4566
+      S3_PHOTOS_BUCKET: marketplace-catalog-photos
+      S3_ENDPOINT: http://localhost:4566
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
       # CI-only value — signs test JWTs, never used against a real deploy.
       JWT_SECRET: ci-test-secret-not-for-production-use
 
@@ -55,6 +64,16 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+
+      - name: Bootstrap LocalStack (S3 bucket + SQS queues)
+        run: |
+          aws --endpoint-url http://localhost:4566 s3 mb s3://marketplace-catalog-photos
+          aws --endpoint-url http://localhost:4566 sqs create-queue --queue-name marketplace-prescreen-dlq
+          DLQ_ARN=$(aws --endpoint-url http://localhost:4566 sqs get-queue-attributes \
+            --queue-url http://localhost:4566/000000000000/marketplace-prescreen-dlq \
+            --attribute-names QueueArn --query Attributes.QueueArn --output text)
+          aws --endpoint-url http://localhost:4566 sqs create-queue --queue-name marketplace-prescreen \
+            --attributes "{\"RedrivePolicy\":\"{\\\"deadLetterTargetArn\\\":\\\"$DLQ_ARN\\\",\\\"maxReceiveCount\\\":\\\"5\\\"}\"}"
 
       - run: pnpm install --frozen-lockfile
 

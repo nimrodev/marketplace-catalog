@@ -16,6 +16,22 @@ services:
       timeout: 3s
       retries: 15
 
+  localstack:
+    image: localstack/localstack:3
+    restart: unless-stopped
+    environment:
+      SERVICES: s3,sqs
+      AWS_DEFAULT_REGION: eu-central-1
+    ports:
+      - '4566:4566'
+    volumes:
+      - ./infra/localstack/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:4566/_localstack/health']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
   api:
     build:
       context: .
@@ -27,15 +43,22 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      localstack:
+        condition: service_healthy
     environment:
       NODE_ENV: development
       PORT: '3000'
       DATABASE_URL: postgresql://marketplace:marketplace@postgres:5432/marketplace_dev
       AWS_REGION: eu-central-1
-      # No LocalStack in this compose file yet (added in MAR-23, once S3/SQS
-      # have an actual consumer) — GET /health/ready will report SQS "down"
-      # here, which is expected, not a bug.
-      SQS_PRESCREEN_QUEUE_URL: https://sqs.eu-central-1.amazonaws.com/000000000000/dev-placeholder
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      SQS_PRESCREEN_QUEUE_URL: http://localstack:4566/000000000000/marketplace-prescreen
+      SQS_ENDPOINT: http://localstack:4566
+      S3_PHOTOS_BUCKET: marketplace-catalog-photos
+      S3_ENDPOINT: http://localstack:4566
+      # api reaches localstack over the Docker network; a browser using a
+      # presigned URL needs the host-mapped port instead.
+      S3_PUBLIC_ENDPOINT: http://localhost:4566
     ports:
       - '3000:3000'
     volumes:

@@ -13,17 +13,18 @@ const PRESIGN_EXPIRES_SECONDS = 5 * 60;
 export class UploadsService {
   private readonly client: S3Client;
   private readonly bucket: string;
+  private readonly publicEndpoint?: string;
 
-  constructor(config: ConfigService) {
+  constructor(private readonly config: ConfigService) {
     this.client = createS3Client(config);
     this.bucket = config.getOrThrow<string>('S3_PHOTOS_BUCKET');
+    this.publicEndpoint = config.get<string>('S3_PUBLIC_ENDPOINT');
   }
 
   async createPresignedUpload(userId: string, dto: PresignRequestDto): Promise<PresignResponse> {
     const key = buildPhotoKey(userId, dto.contentType);
-    // Binding ContentLength into the signed request means S3 rejects the
-    // actual PUT outright if the uploaded bytes don't match what was
-    // declared here — not just a client-side size check (MAR-23 AC).
+    // Binds ContentLength into the signature, so S3 rejects a mismatched
+    // upload outright, not just a client-side size check.
     const command = new PutObjectCommand({
       Bucket: this.bucket,
       Key: key,
@@ -31,6 +32,19 @@ export class UploadsService {
       ContentLength: dto.contentLength,
     });
     const url = await getSignedUrl(this.client, command, { expiresIn: PRESIGN_EXPIRES_SECONDS });
-    return { url, key };
+    return { url: this.toPublicUrl(url), key };
+  }
+
+  // LocalStack only: the API reaches it over the Docker network, but a
+  // presigned URL is used by the browser, which needs a host-reachable one.
+  private toPublicUrl(url: string): string {
+    if (!this.publicEndpoint) {
+      return url;
+    }
+    const target = new URL(url);
+    const publicOrigin = new URL(this.publicEndpoint);
+    target.protocol = publicOrigin.protocol;
+    target.host = publicOrigin.host;
+    return target.toString();
   }
 }
