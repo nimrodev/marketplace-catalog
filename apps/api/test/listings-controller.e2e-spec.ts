@@ -13,6 +13,8 @@ describe('GET /listings (e2e)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
   let contributorId: string;
+  let publishedListingId: string;
+  let pendingListingId: string;
 
   beforeAll(async () => {
     const moduleRef: TestingModule = await Test.createTestingModule({ imports: [AppModule] }).compile();
@@ -26,11 +28,20 @@ describe('GET /listings (e2e)', () => {
       ['listings-controller-test@example.com', 'irrelevant', 'CONTRIBUTOR'],
     );
     contributorId = user.id;
-    await dataSource.query(
+    const [published] = await dataSource.query(
       `INSERT INTO listings (title, description, price, condition, category, is_negotiable, min_price, options, status, rejection_reason, contributor_id)
-       VALUES ('Controller smoke test listing', 'A description long enough to pass the layer-1 length rule.', 42, 'GOOD', 'ELECTRONICS', false, null, '{}', 'PUBLISHED', null, $1)`,
+       VALUES ('Controller smoke test listing', 'A description long enough to pass the layer-1 length rule.', 42, 'GOOD', 'ELECTRONICS', false, null, '{}', 'PUBLISHED', null, $1)
+       RETURNING id`,
       [contributorId],
     );
+    publishedListingId = published.id;
+    const [pending] = await dataSource.query(
+      `INSERT INTO listings (title, description, price, condition, category, is_negotiable, min_price, options, status, rejection_reason, contributor_id)
+       VALUES ('Controller pending listing', 'A description long enough to pass the layer-1 length rule.', 42, 'GOOD', 'ELECTRONICS', false, null, '{}', 'PENDING', null, $1)
+       RETURNING id`,
+      [contributorId],
+    );
+    pendingListingId = pending.id;
   });
 
   afterAll(async () => {
@@ -73,5 +84,30 @@ describe('GET /listings (e2e)', () => {
 
   it('400s on a non-numeric limit rather than silently falling back to the default', async () => {
     await request(app.getHttpServer()).get('/api/listings').query({ limit: 'abc' }).expect(400);
+  });
+
+  describe('GET /listings/:id', () => {
+    it('returns the full detail for a published listing, with photos and no risk', async () => {
+      const res = await request(app.getHttpServer()).get(`/api/listings/${publishedListingId}`).expect(200);
+      expect(res.body).toMatchObject({
+        id: publishedListingId,
+        description: expect.any(String),
+        status: 'PUBLISHED',
+        risk: null,
+      });
+      expect(res.body.photos).toEqual(expect.any(Array));
+    });
+
+    it('an anonymous viewer requesting a pending listing gets 404, not 403', async () => {
+      await request(app.getHttpServer()).get(`/api/listings/${pendingListingId}`).expect(404);
+    });
+
+    it('a nonexistent (but well-formed) id gets 404', async () => {
+      await request(app.getHttpServer()).get('/api/listings/00000000-0000-0000-0000-000000000000').expect(404);
+    });
+
+    it('a malformed id 400s rather than 500ing', async () => {
+      await request(app.getHttpServer()).get('/api/listings/not-a-uuid').expect(400);
+    });
   });
 });

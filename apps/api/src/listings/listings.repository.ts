@@ -1,8 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository, SelectQueryBuilder } from 'typeorm';
-import { CatalogQuery, ListingStatus, ListingSummary, Page, UserRole } from '@marketplace/shared';
+import {
+  CatalogQuery,
+  ListingDetail,
+  ListingPhoto,
+  ListingRisk,
+  ListingStatus,
+  ListingSummary,
+  Page,
+  UserRole,
+} from '@marketplace/shared';
 import { Listing } from './listing.entity';
+import { ListingPhoto as ListingPhotoEntity } from './listing-photo.entity';
+import { ListingRisk as ListingRiskEntity } from './listing-risk.entity';
 import { encodeCursor, decodeCursor } from './cursor';
 
 export type Viewer =
@@ -10,13 +21,17 @@ export type Viewer =
   | { role: UserRole.CONTRIBUTOR; userId: string }
   | { role: UserRole.MODERATOR | UserRole.ADMIN };
 
+function isModeratorOrAdmin(viewer: Viewer): boolean {
+  return viewer.role === UserRole.MODERATOR || viewer.role === UserRole.ADMIN;
+}
+
 const NOT_DELETED = 'listing.deletedAt IS NULL';
 const IS_PUBLISHED = 'listing.status = :published';
 
 // Every accessor must route through here (MAR-15). deleted_at excludes
 // everyone but moderator/admin, owner included — delete is moderator-only.
 function scopeToVisible(qb: SelectQueryBuilder<Listing>, viewer: Viewer): SelectQueryBuilder<Listing> {
-  if (viewer.role === UserRole.MODERATOR || viewer.role === UserRole.ADMIN) {
+  if (isModeratorOrAdmin(viewer)) {
     return qb;
   }
 
@@ -82,15 +97,72 @@ function toSummary(listing: Listing, primaryPhotoUrl: string | null): ListingSum
   };
 }
 
+// listing.photos is Date-typed on the entity but ISO strings on the
+// wire (ListingDetail); toISOString() here, once, is the boundary.
+function toDetail(listing: Listing, photos: ListingPhoto[], risk: ListingRisk | null): ListingDetail {
+  return {
+    id: listing.id,
+    title: listing.title,
+    price: Number(listing.price),
+    condition: listing.condition,
+    category: listing.category,
+    description: listing.description,
+    isNegotiable: listing.isNegotiable,
+    minPrice: listing.minPrice === null ? null : Number(listing.minPrice),
+    options: listing.options,
+    photos,
+    status: listing.status,
+    rejectionReason: listing.rejectionReason,
+    contributorId: listing.contributorId,
+    createdAt: listing.createdAt.toISOString(),
+    updatedAt: listing.updatedAt.toISOString(),
+    publishedAt: listing.publishedAt ? listing.publishedAt.toISOString() : null,
+    risk,
+  };
+}
+
 @Injectable()
 export class ListingsRepository {
-  constructor(@InjectRepository(Listing) private readonly repo: Repository<Listing>) {}
+  constructor(
+    @InjectRepository(Listing) private readonly repo: Repository<Listing>,
+    @InjectRepository(ListingPhotoEntity) private readonly photoRepo: Repository<ListingPhotoEntity>,
+    @InjectRepository(ListingRiskEntity) private readonly riskRepo: Repository<ListingRiskEntity>,
+  ) {}
 
   // null for "doesn't exist" and "exists but hidden" alike — no signal
   // to leak, so no path to a 403.
   findVisibleById(id: string, viewer: Viewer): Promise<Listing | null> {
     const qb = this.repo.createQueryBuilder('listing').where('listing.id = :id', { id });
     return scopeToVisible(qb, viewer).getOne();
+  }
+
+  // risk is loaded only for moderator/admin viewers — never fetched, so
+  // it can never leak into the response for anyone else (MAR-22).
+  async findDetail(id: string, viewer: Viewer): Promise<ListingDetail | null> {
+    const listing = await this.findVisibleById(id, viewer);
+    if (!listing) {
+      return null;
+    }
+
+    const [photos, risk] = await Promise.all([
+      this.loadPhotos(id),
+      isModeratorOrAdmin(viewer) ? this.loadRisk(id) : Promise.resolve(null),
+    ]);
+
+    return toDetail(listing, photos, risk);
+  }
+
+  private async loadPhotos(listingId: string): Promise<ListingPhoto[]> {
+    const rows = await this.photoRepo.find({ where: { listingId }, order: { sortOrder: 'ASC' } });
+    return rows.map((row) => ({ url: row.s3Key, sortOrder: row.sortOrder }));
+  }
+
+  private async loadRisk(listingId: string): Promise<ListingRisk | null> {
+    const row = await this.riskRepo.findOneBy({ listingId });
+    if (!row) {
+      return null;
+    }
+    return { level: row.level, reasons: row.reasons, flags: row.flags, model: row.model, evaluatedAt: row.evaluatedAt.toISOString() };
   }
 
   async findCatalogPage(query: CatalogQuery, viewer: Viewer): Promise<Page<ListingSummary>> {

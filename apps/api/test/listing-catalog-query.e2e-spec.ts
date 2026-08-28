@@ -2,6 +2,8 @@ import { DataSource } from 'typeorm';
 import { ListingCategory, ListingCondition, ListingOption, ListingStatus } from '@marketplace/shared';
 import { buildDataSourceOptions } from '../src/database/data-source-options';
 import { Listing } from '../src/listings/listing.entity';
+import { ListingPhoto } from '../src/listings/listing-photo.entity';
+import { ListingRisk } from '../src/listings/listing-risk.entity';
 import { CATALOG_LIMIT, ListingsRepository, Viewer } from '../src/listings/listings.repository';
 
 describe('Catalog query (e2e)', () => {
@@ -57,7 +59,11 @@ describe('Catalog query (e2e)', () => {
   beforeAll(async () => {
     dataSource = new DataSource(buildDataSourceOptions(process.env.DATABASE_URL!));
     await dataSource.initialize();
-    repo = new ListingsRepository(dataSource.getRepository(Listing));
+    repo = new ListingsRepository(
+      dataSource.getRepository(Listing),
+      dataSource.getRepository(ListingPhoto),
+      dataSource.getRepository(ListingRisk),
+    );
 
     const [user] = await dataSource.query(
       `INSERT INTO users (email, password_hash, role) VALUES ($1, $2, $3) RETURNING id`,

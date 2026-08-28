@@ -2,6 +2,8 @@ import { DataSource } from 'typeorm';
 import { UserRole } from '@marketplace/shared';
 import { buildDataSourceOptions } from '../src/database/data-source-options';
 import { Listing } from '../src/listings/listing.entity';
+import { ListingPhoto } from '../src/listings/listing-photo.entity';
+import { ListingRisk } from '../src/listings/listing-risk.entity';
 import { ListingsRepository, Viewer } from '../src/listings/listings.repository';
 
 // The leak test (MAR-15): findVisibleById returns Listing | null, so
@@ -58,7 +60,11 @@ describe('Listing visibility scoping (e2e)', () => {
   beforeAll(async () => {
     dataSource = new DataSource(buildDataSourceOptions(process.env.DATABASE_URL!));
     await dataSource.initialize();
-    repo = new ListingsRepository(dataSource.getRepository(Listing));
+    repo = new ListingsRepository(
+      dataSource.getRepository(Listing),
+      dataSource.getRepository(ListingPhoto),
+      dataSource.getRepository(ListingRisk),
+    );
 
     const [owner] = await dataSource.query(
       `INSERT INTO users (email, password_hash, role) VALUES ($1, $2, $3) RETURNING id`,

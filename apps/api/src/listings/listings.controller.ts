@@ -1,5 +1,13 @@
-import { BadRequestException, Controller, Get, Query } from '@nestjs/common';
-import { ListingSummary, Page } from '@marketplace/shared';
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  ParseUUIDPipe,
+  Query,
+} from '@nestjs/common';
+import { ListingDetail, ListingSummary, Page } from '@marketplace/shared';
 import { InvalidCursorError } from './cursor';
 import { ListingsRepository } from './listings.repository';
 import { parseCatalogQuery } from './parse-catalog-query';
@@ -24,5 +32,14 @@ export class ListingsController {
       }
       throw err;
     }
+  }
+
+  @Get(':id')
+  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ListingDetail> {
+    const listing = await this.listings.findDetail(id, ANONYMOUS);
+    if (!listing) {
+      throw new NotFoundException();
+    }
+    return listing;
   }
 }
