@@ -11,4 +11,5 @@ export const envValidationSchema = Joi.object({
   AWS_REGION: Joi.string().required(),
   SQS_PRESCREEN_QUEUE_URL: Joi.string().uri().required(),
   SQS_ENDPOINT: Joi.string().uri().optional(),
+  JWT_SECRET: Joi.string().required(),
 });
