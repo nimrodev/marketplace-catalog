@@ -62,7 +62,10 @@ jobs:
 
       - run: pnpm build
 
-      - run: pnpm migrate
+      # Schema setup, not a test — applies migrations to this job's ephemeral
+      # Postgres so the e2e suite below has real tables to run against.
+      - name: Apply migrations (CI database)
+        run: pnpm migrate
 
       - run: pnpm test
 

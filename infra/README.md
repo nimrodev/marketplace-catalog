@@ -28,6 +28,12 @@ tradeoff for this project's scope, not an oversight — the properly hardened
 answer is OIDC + AWS SSM Run Command instead of SSH, tracked as a follow-up
 issue rather than done under deploy pressure.
 
+**2GB swap file, `/swapfile`.** The first real deploy's Docker build got
+OOM-killed (`exit 137`) mid-`pnpm deploy --prod` — t4g.micro's ~900MB RAM
+with no swap isn't enough headroom for pnpm resolving/installing the whole
+workspace. Added on the running instance and to `user-data.sh` so a fresh
+instance gets it too.
+
 **Recreating:** `instance-role-policy.json`, `trust-policy.json`, and `user-data.sh`
 in this directory are the actual artifacts used; wire them up with `iam create-role`
 / `create-instance-profile` / `ec2 run-instances --user-data file://user-data.sh`
