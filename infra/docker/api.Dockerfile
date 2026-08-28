@@ -9,6 +9,14 @@ FROM node:22-slim AS base
 RUN corepack enable
 WORKDIR /repo
 
+# Node's default max-old-space-size is a heuristic based on available RAM,
+# not swap — on the t4g.micro (~900MB RAM + 2GB swap, see infra/README.md)
+# that default is too conservative and pnpm's own install/deploy steps hit
+# a V8 heap OOM (not a kernel OOM-kill) well before running out of actual
+# (swap-backed) memory. Raised explicitly since swap now gives the OS
+# somewhere to page cold memory to.
+ENV NODE_OPTIONS=--max-old-space-size=1536
+
 FROM base AS deps
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 COPY apps/api/package.json apps/api/package.json
