@@ -171,6 +171,35 @@ export class ListingsRepository {
     return scopeToVisible(qb, viewer).getOne();
   }
 
+  // Unscoped by status/ownership — an update needs the listing loaded
+  // before the caller can even check who owns it, to tell a 404 from a 403.
+  findEditableById(id: string): Promise<Listing | null> {
+    return this.repo.createQueryBuilder('listing').where('listing.id = :id', { id }).andWhere(NOT_DELETED).getOne();
+  }
+
+  async update(
+    id: string,
+    fields: Partial<
+      Pick<Listing, 'title' | 'description' | 'price' | 'condition' | 'category' | 'isNegotiable' | 'minPrice' | 'options'>
+    >,
+    // Travel together: rejectionReason only means something alongside the
+    // status it applies to (DB CHECK: REJECTED requires a reason).
+    transition: { status: ListingStatus; rejectionReason: string | null },
+    photoKeys?: string[],
+  ): Promise<void> {
+    await this.repo.manager.transaction(async (manager) => {
+      const listingRepo = manager.getRepository(Listing);
+      await listingRepo.update(id, { ...fields, ...transition });
+
+      if (photoKeys) {
+        const photoRepo = manager.getRepository(ListingPhotoEntity);
+        await photoRepo.delete({ listingId: id });
+        const photos = photoKeys.map((s3Key, sortOrder) => photoRepo.create({ listingId: id, s3Key, sortOrder }));
+        await photoRepo.save(photos);
+      }
+    });
+  }
+
   // risk is loaded only for moderator/admin viewers — never fetched, so
   // it can never leak into the response for anyone else (MAR-22).
   async findDetail(id: string, viewer: Viewer): Promise<ListingDetail | null> {

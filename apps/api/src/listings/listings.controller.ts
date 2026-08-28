@@ -7,6 +7,7 @@ import {
   NotFoundException,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Query,
 } from '@nestjs/common';
@@ -17,6 +18,7 @@ import { Public } from '../auth/public.decorator';
 import { Roles } from '../auth/roles.decorator';
 import { InvalidCursorError } from './cursor';
 import { CreateListingRequestDto } from './dto/create-listing-request.dto';
+import { UpdateListingRequestDto } from './dto/update-listing-request.dto';
 import { ListingsRepository } from './listings.repository';
 import { ListingsService } from './listings.service';
 import { parseCatalogQuery } from './parse-catalog-query';
@@ -65,5 +67,17 @@ export class ListingsController {
   @HttpCode(201)
   async create(@Body() dto: CreateListingRequestDto, @CurrentUser() user: AuthenticatedUser): Promise<ListingDetail> {
     return this.listingsService.create(user.id, dto);
+  }
+
+  // CONTRIBUTOR is the lowest rank; the service enforces ownership for
+  // contributors and lets moderators/admins edit anything.
+  @Roles(UserRole.CONTRIBUTOR)
+  @Patch(':id')
+  async update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateListingRequestDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<ListingDetail> {
+    return this.listingsService.update(user, id, dto);
   }
 }

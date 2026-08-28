@@ -1,7 +1,10 @@
-import { BadRequestException } from '@nestjs/common';
-import { ListingCategory, ListingCondition, ListingOption } from '@marketplace/shared';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { ListingCategory, ListingCondition, ListingOption, ListingStatus, UserRole } from '@marketplace/shared';
 import { PhotoOwnershipValidator } from '../uploads/photo-ownership.validator';
+import { AuthenticatedUser } from '../auth/jwt-payload';
 import { CreateListingRequestDto } from './dto/create-listing-request.dto';
+import { UpdateListingRequestDto } from './dto/update-listing-request.dto';
+import { Listing } from './listing.entity';
 import { ListingsRepository } from './listings.repository';
 import { ListingsService } from './listings.service';
 
@@ -64,5 +67,140 @@ describe('ListingsService.create', () => {
     await service.create('user-1', validDto({ description: 'Message me at https://my-shop.example.com to arrange' }));
 
     expect(repository.create).toHaveBeenCalledTimes(1);
+  });
+});
+
+function existingListing(overrides: Partial<Listing> = {}): Listing {
+  return {
+    id: 'listing-1',
+    title: 'Vintage bicycle, great condition',
+    description: 'A well-loved bicycle, barely used, ready for a new home.',
+    price: '150.00',
+    condition: ListingCondition.GOOD,
+    category: ListingCategory.SPORTS_OUTDOORS,
+    isNegotiable: false,
+    minPrice: null,
+    options: [ListingOption.LOCAL_PICKUP],
+    status: ListingStatus.PUBLISHED,
+    rejectionReason: null,
+    contributorId: 'owner-1',
+    expiresAt: null,
+    deletedAt: null,
+    createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+    publishedAt: new Date('2026-01-01T00:00:00.000Z'),
+    ...overrides,
+  } as Listing;
+}
+
+const owner: AuthenticatedUser = { id: 'owner-1', role: UserRole.CONTRIBUTOR };
+const otherContributor: AuthenticatedUser = { id: 'someone-else', role: UserRole.CONTRIBUTOR };
+const moderator: AuthenticatedUser = { id: 'mod-1', role: UserRole.MODERATOR };
+
+describe('ListingsService.update', () => {
+  let repository: jest.Mocked<ListingsRepository>;
+  let photoOwnership: jest.Mocked<PhotoOwnershipValidator>;
+  let service: ListingsService;
+
+  beforeEach(() => {
+    repository = {
+      findEditableById: jest.fn(),
+      update: jest.fn(),
+      findDetail: jest.fn(),
+    } as unknown as jest.Mocked<ListingsRepository>;
+    photoOwnership = { validate: jest.fn() } as unknown as jest.Mocked<PhotoOwnershipValidator>;
+    service = new ListingsService(repository, photoOwnership);
+  });
+
+  it('404s when the listing does not exist', async () => {
+    repository.findEditableById.mockResolvedValue(null);
+
+    await expect(service.update(owner, 'listing-1', new UpdateListingRequestDto())).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+  });
+
+  it('403s a contributor editing another contributor\'s listing', async () => {
+    repository.findEditableById.mockResolvedValue(existingListing());
+
+    await expect(service.update(otherContributor, 'listing-1', new UpdateListingRequestDto())).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
+    expect(repository.update).not.toHaveBeenCalled();
+  });
+
+  it('lets a moderator edit any listing', async () => {
+    repository.findEditableById.mockResolvedValue(existingListing());
+    repository.findDetail.mockResolvedValue({ id: 'listing-1' } as never);
+
+    await service.update(moderator, 'listing-1', Object.assign(new UpdateListingRequestDto(), { title: 'New title' }));
+
+    expect(repository.update).toHaveBeenCalledTimes(1);
+  });
+
+  it('reverts a PUBLISHED listing to PENDING and clears rejectionReason when the owner edits it', async () => {
+    repository.findEditableById.mockResolvedValue(existingListing({ status: ListingStatus.PUBLISHED }));
+    repository.findDetail.mockResolvedValue({ id: 'listing-1' } as never);
+
+    await service.update(owner, 'listing-1', Object.assign(new UpdateListingRequestDto(), { title: 'New title' }));
+
+    expect(repository.update).toHaveBeenCalledWith(
+      'listing-1',
+      expect.objectContaining({ title: 'New title' }),
+      { status: ListingStatus.PENDING, rejectionReason: null },
+      undefined,
+    );
+  });
+
+  it('leaves a PUBLISHED listing untouched when a moderator edits it', async () => {
+    repository.findEditableById.mockResolvedValue(existingListing({ status: ListingStatus.PUBLISHED }));
+    repository.findDetail.mockResolvedValue({ id: 'listing-1' } as never);
+
+    await service.update(moderator, 'listing-1', Object.assign(new UpdateListingRequestDto(), { title: 'New title' }));
+
+    expect(repository.update).toHaveBeenCalledWith(
+      'listing-1',
+      expect.objectContaining({ title: 'New title' }),
+      { status: ListingStatus.PUBLISHED, rejectionReason: null },
+      undefined,
+    );
+  });
+
+  it('re-validates photo ownership against the listing owner, not the acting moderator', async () => {
+    repository.findEditableById.mockResolvedValue(existingListing());
+    repository.findDetail.mockResolvedValue({ id: 'listing-1' } as never);
+
+    await service.update(
+      moderator,
+      'listing-1',
+      Object.assign(new UpdateListingRequestDto(), { photoKeys: ['listings/owner-1/new.jpg'] }),
+    );
+
+    expect(photoOwnership.validate).toHaveBeenCalledWith('owner-1', ['listings/owner-1/new.jpg']);
+  });
+
+  it('rejects hard-hit content even when only unrelated fields changed', async () => {
+    repository.findEditableById.mockResolvedValue(existingListing({ description: 'Selling a rifle, barely used' }));
+
+    await expect(
+      service.update(owner, 'listing-1', Object.assign(new UpdateListingRequestDto(), { title: 'New title' })),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(repository.update).not.toHaveBeenCalled();
+  });
+
+  it('clears minPrice when isNegotiable flips to false without a minPrice in the same payload', async () => {
+    repository.findEditableById.mockResolvedValue(
+      existingListing({ isNegotiable: true, minPrice: '100.00', price: '150.00' }),
+    );
+    repository.findDetail.mockResolvedValue({ id: 'listing-1' } as never);
+
+    await service.update(owner, 'listing-1', Object.assign(new UpdateListingRequestDto(), { isNegotiable: false }));
+
+    expect(repository.update).toHaveBeenCalledWith(
+      'listing-1',
+      expect.objectContaining({ isNegotiable: false, minPrice: null }),
+      { status: ListingStatus.PENDING, rejectionReason: null },
+      undefined,
+    );
   });
 });
