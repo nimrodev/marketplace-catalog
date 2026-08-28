@@ -1,8 +1,11 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import cookieParser from 'cookie-parser';
 
 // Shared by main.ts and the e2e suite so the pipe/prefix config used in
 // production is exactly what the tests exercise — no risk of the two drifting.
 export function configureApp(app: INestApplication): void {
+  // Needed to read the httpOnly auth cookie off incoming requests (MAR-12).
+  app.use(cookieParser());
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

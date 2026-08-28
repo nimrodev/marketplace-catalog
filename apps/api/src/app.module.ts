@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
+import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './health/health.module';
 import { ListingsModule } from './listings/listings.module';
 import { envValidationSchema } from './config/env.validation';
@@ -27,6 +28,7 @@ import { buildDataSourceOptions } from './database/data-source-options';
     }),
     HealthModule,
     ListingsModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [],

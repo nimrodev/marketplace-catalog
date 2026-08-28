@@ -7,6 +7,7 @@ describe('envValidationSchema', () => {
     DATABASE_URL: 'postgresql://user:pass@host:5432/db',
     AWS_REGION: 'eu-central-1',
     SQS_PRESCREEN_QUEUE_URL: 'https://sqs.eu-central-1.amazonaws.com/123456789012/queue',
+    JWT_SECRET: 'test-secret',
   };
 
   it('accepts a fully-specified, valid environment', () => {
@@ -33,6 +34,13 @@ describe('envValidationSchema', () => {
     const { error } = envValidationSchema.validate(rest, { abortEarly: false });
     expect(error).toBeDefined();
     expect(error!.message).toMatch(/SQS_PRESCREEN_QUEUE_URL/);
+  });
+
+  it('fails fast when JWT_SECRET is missing', () => {
+    const { JWT_SECRET, ...rest } = validEnv;
+    const { error } = envValidationSchema.validate(rest, { abortEarly: false });
+    expect(error).toBeDefined();
+    expect(error!.message).toMatch(/JWT_SECRET/);
   });
 
   it('rejects malformed config (DATABASE_URL not a URI)', () => {
