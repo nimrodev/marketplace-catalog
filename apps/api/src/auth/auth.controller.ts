@@ -1,23 +1,18 @@
-import { Body, Controller, Get, HttpCode, Post, Req, Res, UnauthorizedException } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Post, Res, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
-import type { CookieOptions, Request, Response } from 'express';
+import type { CookieOptions, Response } from 'express';
 import { AuthUser } from '@marketplace/shared';
 import { AuthService } from './auth.service';
+import { CurrentUser } from './current-user.decorator';
 import { LoginRequestDto } from './dto/login-request.dto';
-import { SESSION_MAX_AGE_MS } from './session.constants';
-
-export const AUTH_COOKIE_NAME = 'auth_token';
-
-interface JwtPayload {
-  sub: string;
-}
+import { AuthenticatedUser } from './jwt-payload';
+import { JwtAuthGuard } from './jwt-auth.guard';
+import { AUTH_COOKIE_NAME, SESSION_MAX_AGE_MS } from './session.constants';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly jwt: JwtService,
     private readonly config: ConfigService,
   ) {}
 
@@ -50,20 +45,11 @@ export class AuthController {
   }
 
   @Get('me')
-  async me(@Req() req: Request): Promise<AuthUser> {
-    const token: unknown = req.cookies?.[AUTH_COOKIE_NAME];
-    if (!token || typeof token !== 'string') {
-      throw new UnauthorizedException();
-    }
-
-    let payload: JwtPayload;
-    try {
-      payload = await this.jwt.verifyAsync<JwtPayload>(token);
-    } catch {
-      // Tampered/expired/malformed token — 401, never a 500.
-      throw new UnauthorizedException();
-    }
-
-    return this.authService.getCurrentUser(payload.sub);
+  @UseGuards(JwtAuthGuard)
+  async me(@CurrentUser() user: AuthenticatedUser): Promise<AuthUser> {
+    // Re-fetch from the DB (rather than trusting the token's role claim)
+    // so an account deactivated since login loses access on this call,
+    // not just on its next login (MAR-12).
+    return this.authService.getCurrentUser(user.id);
   }
 }

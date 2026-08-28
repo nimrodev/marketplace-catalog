@@ -96,6 +96,14 @@ describe('AuthService', () => {
     expect(Object.keys(result).sort()).toEqual(['email', 'id', 'role']);
   });
 
+  describe('signToken', () => {
+    it('signs sub and role (MAR-13: guards read role off the claim, no DB hit)', () => {
+      service.signToken({ id: 'user-1', email: 'contributor@example.com', role: UserRole.MODERATOR });
+
+      expect(jwt.sign).toHaveBeenCalledWith({ sub: 'user-1', role: UserRole.MODERATOR });
+    });
+  });
+
   describe('getCurrentUser', () => {
     it('returns the AuthUser for an active user', async () => {
       const user = buildUser();

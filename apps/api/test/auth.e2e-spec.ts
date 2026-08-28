@@ -5,9 +5,16 @@ import * as bcrypt from 'bcrypt';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/bootstrap';
-import { AUTH_COOKIE_NAME } from '../src/auth/auth.controller';
+import { AUTH_COOKIE_NAME } from '../src/auth/session.constants';
 
 const PASSWORD = 'CorrectPass1!';
+
+// No jsonwebtoken dependency in this app, so decode the payload manually
+// (base64url, no signature check needed — this only asserts on claim shape).
+function decodeJwtPayload(token: string): unknown {
+  const payload = token.split('.')[1];
+  return JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+}
 
 // Extracts the `auth_token=<value>` piece of a Set-Cookie header so it can
 // be replayed on the next request via .set('Cookie', ...).
@@ -71,6 +78,10 @@ describe('Auth (e2e)', () => {
       expect(cookieHeader).toContain(`${AUTH_COOKIE_NAME}=`);
       expect(cookieHeader).toMatch(/HttpOnly/i);
       expect(cookieHeader).toMatch(/SameSite=Lax/i);
+
+      const cookie = extractCookie(res);
+      const payload = decodeJwtPayload(cookie.split('=')[1]);
+      expect(payload).toMatchObject({ sub: activeUserId, role: 'CONTRIBUTOR' });
     });
 
     it('fails with a uniform message for a wrong password', async () => {

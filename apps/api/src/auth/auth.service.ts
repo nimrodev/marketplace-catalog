@@ -38,10 +38,11 @@ export class AuthService {
     return toAuthUser(user);
   }
 
-  // Only `sub` — nothing reads role/email off the token, getCurrentUser
-  // always re-fetches from the DB, so signing them would be dead weight.
+  // `role` rides along so guards can authorize without a DB hit on every
+  // request (MAR-13) — the cost is a role change only takes effect once
+  // the token expires. getCurrentUser still re-fetches for /auth/me itself.
   signToken(user: AuthUser): string {
-    return this.jwt.sign({ sub: user.id });
+    return this.jwt.sign({ sub: user.id, role: user.role });
   }
 
   // Fresh DB fetch rather than trusting the JWT payload — an account
