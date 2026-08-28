@@ -1,5 +1,20 @@
-import { ListingOption, ListingStatus, RiskLevel } from '@marketplace/shared';
+import { ListingCategory, ListingOption, ListingStatus, RiskLevel } from '@marketplace/shared';
 import type { BadgeTone } from '../primitives';
+
+const CATEGORY_LABEL: Record<ListingCategory, string> = {
+  [ListingCategory.ELECTRONICS]: 'Electronics',
+  [ListingCategory.FURNITURE]: 'Furniture',
+  [ListingCategory.CLOTHING]: 'Clothing',
+  [ListingCategory.VEHICLES]: 'Vehicles',
+  [ListingCategory.HOME_GARDEN]: 'Home & Garden',
+  [ListingCategory.SPORTS_OUTDOORS]: 'Sports & Outdoors',
+  [ListingCategory.TOYS_GAMES]: 'Toys & Games',
+  [ListingCategory.OTHER]: 'Other',
+};
+
+export function categoryLabel(category: ListingCategory): string {
+  return CATEGORY_LABEL[category];
+}
 
 const OPTION_LABEL: Record<ListingOption, string> = {
   [ListingOption.DELIVERY_AVAILABLE]: 'Delivery available',

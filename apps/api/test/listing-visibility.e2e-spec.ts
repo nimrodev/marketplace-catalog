@@ -5,6 +5,7 @@ import { Listing } from '../src/listings/listing.entity';
 import { ListingPhoto } from '../src/listings/listing-photo.entity';
 import { ListingRisk } from '../src/listings/listing-risk.entity';
 import { ListingsRepository, Viewer } from '../src/listings/listings.repository';
+import { fakeConfigService } from './support/fake-config-service';
 
 // The leak test (MAR-15): findVisibleById returns Listing | null, so
 // there's no code path to signal "exists but hidden" vs. "doesn't
@@ -64,6 +65,7 @@ describe('Listing visibility scoping (e2e)', () => {
       dataSource.getRepository(Listing),
       dataSource.getRepository(ListingPhoto),
       dataSource.getRepository(ListingRisk),
+      fakeConfigService(),
     );
 
     const [owner] = await dataSource.query(

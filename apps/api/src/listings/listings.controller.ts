@@ -12,23 +12,24 @@ import {
   Query,
 } from '@nestjs/common';
 import { ListingDetail, ListingSummary, Page, UserRole } from '@marketplace/shared';
-import { CurrentUser } from '../auth/current-user.decorator';
+import { CurrentUser, OptionalCurrentUser } from '../auth/current-user.decorator';
 import { AuthenticatedUser } from '../auth/jwt-payload';
 import { Public } from '../auth/public.decorator';
 import { Roles } from '../auth/roles.decorator';
 import { InvalidCursorError } from './cursor';
 import { CreateListingRequestDto } from './dto/create-listing-request.dto';
 import { UpdateListingRequestDto } from './dto/update-listing-request.dto';
-import { ListingsRepository } from './listings.repository';
+import { ListingsRepository, Viewer } from './listings.repository';
 import { ListingsService } from './listings.service';
 import { parseCatalogQuery } from './parse-catalog-query';
 
-// Every viewer is anonymous for now — the repository already supports
-// contributor/moderator viewers, but wiring a real viewer in from
-// req.user is a later issue's job, not this one's (MAR-14 only opts
-// these routes out of the global auth guard; it doesn't change what
-// they see).
-const ANONYMOUS = { role: null } as const;
+const ANONYMOUS: Viewer = { role: null };
+
+function toViewer(user: AuthenticatedUser | undefined): Viewer {
+  if (!user) return ANONYMOUS;
+  if (user.role === UserRole.CONTRIBUTOR) return { role: UserRole.CONTRIBUTOR, userId: user.id };
+  return { role: user.role };
+}
 
 @Controller('listings')
 export class ListingsController {
@@ -39,10 +40,13 @@ export class ListingsController {
 
   @Public()
   @Get()
-  async findAll(@Query() rawQuery: Record<string, unknown>): Promise<Page<ListingSummary>> {
+  async findAll(
+    @Query() rawQuery: Record<string, unknown>,
+    @OptionalCurrentUser() user: AuthenticatedUser | undefined,
+  ): Promise<Page<ListingSummary>> {
     const query = parseCatalogQuery(rawQuery);
     try {
-      return await this.listings.findCatalogPage(query, ANONYMOUS);
+      return await this.listings.findCatalogPage(query, toViewer(user));
     } catch (err) {
       if (err instanceof InvalidCursorError) {
         throw new BadRequestException('Invalid cursor');
@@ -53,8 +57,11 @@ export class ListingsController {
 
   @Public()
   @Get(':id')
-  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ListingDetail> {
-    const listing = await this.listings.findDetail(id, ANONYMOUS);
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @OptionalCurrentUser() user: AuthenticatedUser | undefined,
+  ): Promise<ListingDetail> {
+    const listing = await this.listings.findDetail(id, toViewer(user));
     if (!listing) {
       throw new NotFoundException();
     }

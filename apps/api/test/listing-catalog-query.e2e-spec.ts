@@ -5,6 +5,7 @@ import { Listing } from '../src/listings/listing.entity';
 import { ListingPhoto } from '../src/listings/listing-photo.entity';
 import { ListingRisk } from '../src/listings/listing-risk.entity';
 import { CATALOG_LIMIT, ListingsRepository, Viewer } from '../src/listings/listings.repository';
+import { fakeConfigService } from './support/fake-config-service';
 
 describe('Catalog query (e2e)', () => {
   let dataSource: DataSource;
@@ -63,6 +64,7 @@ describe('Catalog query (e2e)', () => {
       dataSource.getRepository(Listing),
       dataSource.getRepository(ListingPhoto),
       dataSource.getRepository(ListingRisk),
+      fakeConfigService(),
     );
 
     const [user] = await dataSource.query(

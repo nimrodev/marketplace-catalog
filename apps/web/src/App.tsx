@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './auth/AuthContext';
 import { RequireAuth } from './auth/RequireAuth';
 import { RequireRole } from './auth/RequireRole';
 import CatalogPage from './pages/CatalogPage';
+import EditListingPage from './pages/EditListingPage';
 import ListingDetailPage from './pages/ListingDetailPage';
 import LoginPage from './pages/LoginPage';
 import ModerationQueuePage from './pages/ModerationQueuePage';
@@ -59,6 +60,14 @@ function AppRoutes() {
           element={
             <RequireAuth>
               <SubmitListingPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/listings/:id/edit"
+          element={
+            <RequireAuth>
+              <EditListingPage />
             </RequireAuth>
           }
         />

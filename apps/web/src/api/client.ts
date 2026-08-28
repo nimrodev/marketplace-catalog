@@ -1,9 +1,12 @@
+import type { ApiErrorResponse } from '@marketplace/shared';
+
 const API_BASE = '/api';
 
 export class ApiError extends Error {
   constructor(
     public readonly status: number,
     message: string,
+    public readonly fieldErrors?: Record<string, string[]>,
   ) {
     super(message);
   }
@@ -32,7 +35,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     unauthorizedListeners.forEach((listener) => listener());
   }
   if (!res.ok) {
-    throw new ApiError(res.status, await res.text());
+    const body = await res.text();
+    // Every JSON error body is our own ApiErrorResponse envelope, but a
+    // proxy or an unhandled 5xx can still hand back plain text — fall
+    // back to the raw body rather than throwing out of an error path.
+    try {
+      const parsed = JSON.parse(body) as ApiErrorResponse;
+      throw new ApiError(res.status, parsed.message, parsed.fieldErrors);
+    } catch (err) {
+      if (err instanceof ApiError) throw err;
+      throw new ApiError(res.status, body);
+    }
   }
   if (res.status === 204) {
     return undefined as T;

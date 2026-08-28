@@ -1,10 +1,13 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DataSource } from 'typeorm';
+import * as bcrypt from 'bcrypt';
 import request from 'supertest';
 import { ListingCategory } from '@marketplace/shared';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/bootstrap';
+
+const PASSWORD = 'CorrectPass1!';
 
 // Confirms the actual Nest wiring (module, DI, controller route) works —
 // every other catalog-query test calls ListingsRepository directly and
@@ -13,6 +16,9 @@ describe('GET /listings (e2e)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
   let contributorId: string;
+  let otherContributorId: string;
+  let ownerCookie: string;
+  let otherCookie: string;
   let publishedListingId: string;
   let pendingListingId: string;
 
@@ -23,11 +29,26 @@ describe('GET /listings (e2e)', () => {
     await app.init();
 
     dataSource = moduleRef.get(DataSource);
+    const passwordHash = await bcrypt.hash(PASSWORD, 10);
     const [user] = await dataSource.query(
-      `INSERT INTO users (email, password_hash, role) VALUES ($1, $2, $3) RETURNING id`,
-      ['listings-controller-test@example.com', 'irrelevant', 'CONTRIBUTOR'],
+      `INSERT INTO users (email, password_hash, role, is_active) VALUES ($1, $2, $3, true) RETURNING id`,
+      ['listings-controller-test@example.com', passwordHash, 'CONTRIBUTOR'],
     );
     contributorId = user.id;
+    const [other] = await dataSource.query(
+      `INSERT INTO users (email, password_hash, role, is_active) VALUES ($1, $2, $3, true) RETURNING id`,
+      ['listings-controller-test-other@example.com', passwordHash, 'CONTRIBUTOR'],
+    );
+    otherContributorId = other.id;
+
+    for (const [email, setCookie] of [
+      ['listings-controller-test@example.com', (c: string) => (ownerCookie = c)],
+      ['listings-controller-test-other@example.com', (c: string) => (otherCookie = c)],
+    ] as const) {
+      const loginRes = await request(app.getHttpServer()).post('/api/auth/login').send({ email, password: PASSWORD });
+      const header = loginRes.headers['set-cookie'];
+      setCookie(Array.isArray(header) ? header[0] : header);
+    }
     const [published] = await dataSource.query(
       `INSERT INTO listings (title, description, price, condition, category, is_negotiable, min_price, options, status, rejection_reason, contributor_id)
        VALUES ('Controller smoke test listing', 'A description long enough to pass the layer-1 length rule.', 42, 'GOOD', 'ELECTRONICS', false, null, '{}', 'PUBLISHED', null, $1)
@@ -46,7 +67,7 @@ describe('GET /listings (e2e)', () => {
 
   afterAll(async () => {
     await dataSource.query('DELETE FROM listings WHERE contributor_id = $1', [contributorId]);
-    await dataSource.query('DELETE FROM users WHERE id = $1', [contributorId]);
+    await dataSource.query('DELETE FROM users WHERE id = ANY($1)', [[contributorId, otherContributorId]]);
     await app.close();
   });
 
@@ -100,6 +121,21 @@ describe('GET /listings (e2e)', () => {
 
     it('an anonymous viewer requesting a pending listing gets 404, not 403', async () => {
       await request(app.getHttpServer()).get(`/api/listings/${pendingListingId}`).expect(404);
+    });
+
+    it('the owning contributor sees their own pending listing — the real cookie resolves a real viewer', async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/api/listings/${pendingListingId}`)
+        .set('Cookie', ownerCookie)
+        .expect(200);
+      expect(res.body.id).toBe(pendingListingId);
+    });
+
+    it('a different contributor still gets 404 for someone else\'s pending listing', async () => {
+      await request(app.getHttpServer())
+        .get(`/api/listings/${pendingListingId}`)
+        .set('Cookie', otherCookie)
+        .expect(404);
     });
 
     it('a nonexistent (but well-formed) id gets 404', async () => {

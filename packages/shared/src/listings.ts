@@ -3,6 +3,9 @@ import type { ListingRisk } from './moderation';
 
 export interface ListingPhoto {
   url: string;
+  // The raw storage key behind `url` — needed to send an unchanged photo
+  // back in an update's photoKeys without re-uploading it.
+  key: string;
   sortOrder: number;
 }
 

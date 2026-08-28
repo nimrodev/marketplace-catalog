@@ -37,7 +37,7 @@ export const mockListingDetail: ListingDetail = {
   isNegotiable: true,
   minPrice: 100,
   options: [ListingOption.LOCAL_PICKUP, ListingOption.DELIVERY_AVAILABLE],
-  photos: [{ url: mockListingSummary.primaryPhotoUrl!, sortOrder: 0 }],
+  photos: [{ url: mockListingSummary.primaryPhotoUrl!, key: 'listings/mock-user-1/photo-0.jpg', sortOrder: 0 }],
   status: ListingStatus.PUBLISHED,
   rejectionReason: null,
   contributorId: 'mock-user-1',

@@ -25,12 +25,32 @@ describe('JwtAuthGuard', () => {
     guard = new JwtAuthGuard(jwt, reflector);
   });
 
-  it('lets a @Public() route through without checking the cookie at all', async () => {
+  it('lets a @Public() route through with no cookie, without attempting verification', async () => {
     reflector.getAllAndOverride.mockReturnValueOnce(true);
     const context = buildContext({});
 
     await expect(guard.canActivate(context)).resolves.toBe(true);
     expect(jwt.verifyAsync).not.toHaveBeenCalled();
+  });
+
+  it('resolves the viewer on a @Public() route when a valid cookie is present', async () => {
+    reflector.getAllAndOverride.mockReturnValueOnce(true);
+    jwt.verifyAsync.mockResolvedValue({ sub: 'user-1', role: UserRole.CONTRIBUTOR });
+    const context = buildContext({ [AUTH_COOKIE_NAME]: 'a-real-jwt' });
+    const req = context.switchToHttp().getRequest<{ user?: unknown }>();
+
+    await expect(guard.canActivate(context)).resolves.toBe(true);
+    expect(req.user).toEqual({ id: 'user-1', role: UserRole.CONTRIBUTOR });
+  });
+
+  it('falls back to anonymous on a @Public() route when the cookie is invalid, rather than 401ing', async () => {
+    reflector.getAllAndOverride.mockReturnValueOnce(true);
+    jwt.verifyAsync.mockRejectedValue(new Error('invalid signature'));
+    const context = buildContext({ [AUTH_COOKIE_NAME]: 'not-a-real-jwt' });
+    const req = context.switchToHttp().getRequest<{ user?: unknown }>();
+
+    await expect(guard.canActivate(context)).resolves.toBe(true);
+    expect(req.user).toBeUndefined();
   });
 
   it('401s with no cookie at all', async () => {

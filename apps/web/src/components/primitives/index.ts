@@ -2,6 +2,8 @@ export { Button } from './Button/Button';
 export type { ButtonProps, ButtonVariant } from './Button/Button';
 export { Input } from './Input/Input';
 export type { InputProps } from './Input/Input';
+export { Select } from './Select/Select';
+export type { SelectProps } from './Select/Select';
 export { Card } from './Card/Card';
 export type { CardProps } from './Card/Card';
 export { Badge } from './Badge/Badge';

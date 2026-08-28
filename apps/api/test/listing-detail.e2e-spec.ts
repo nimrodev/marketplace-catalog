@@ -5,6 +5,8 @@ import { Listing } from '../src/listings/listing.entity';
 import { ListingPhoto } from '../src/listings/listing-photo.entity';
 import { ListingRisk } from '../src/listings/listing-risk.entity';
 import { ListingsRepository, Viewer } from '../src/listings/listings.repository';
+import { buildPhotoUrl } from '../src/uploads/photo-url';
+import { fakeConfigService } from './support/fake-config-service';
 
 describe('Listing detail (e2e)', () => {
   let dataSource: DataSource;
@@ -57,6 +59,7 @@ describe('Listing detail (e2e)', () => {
       dataSource.getRepository(Listing),
       dataSource.getRepository(ListingPhoto),
       dataSource.getRepository(ListingRisk),
+      fakeConfigService(),
     );
 
     const [user] = await dataSource.query(
@@ -103,10 +106,11 @@ describe('Listing detail (e2e)', () => {
       [id],
     );
     const detail = await repo.findDetail(id, anonymous);
+    const config = fakeConfigService();
     expect(detail?.photos).toEqual([
-      { url: 'photo-0', sortOrder: 0 },
-      { url: 'photo-1', sortOrder: 1 },
-      { url: 'photo-2', sortOrder: 2 },
+      { url: buildPhotoUrl('photo-0', config), key: 'photo-0', sortOrder: 0 },
+      { url: buildPhotoUrl('photo-1', config), key: 'photo-1', sortOrder: 1 },
+      { url: buildPhotoUrl('photo-2', config), key: 'photo-2', sortOrder: 2 },
     ]);
   });
 

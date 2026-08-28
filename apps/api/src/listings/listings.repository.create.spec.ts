@@ -44,7 +44,8 @@ describe('ListingsRepository.create', () => {
     const listingRepo = { manager: { transaction } };
     const riskRepo = {};
 
-    const repository = new ListingsRepository(listingRepo as never, photoRepo as never, riskRepo as never);
+    const config = {};
+    const repository = new ListingsRepository(listingRepo as never, photoRepo as never, riskRepo as never, config as never);
 
     return { repository, transaction, listingRepoInTx, photoRepoInTx, savedListing };
   }

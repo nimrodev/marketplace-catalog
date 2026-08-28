@@ -21,7 +21,7 @@ export function ListingCard({ listing }: ListingCardProps) {
         <div className={styles.title}>{listing.title}</div>
         <Badge tone={conditionTone(listing.condition)}>{conditionLabel(listing.condition)}</Badge>
         <div className={styles.priceRow}>
-          <span className={styles.price}>₪{listing.price.toLocaleString()}</span>
+          <span className={styles.price}>${listing.price.toLocaleString()}</span>
         </div>
       </div>
     </Card>

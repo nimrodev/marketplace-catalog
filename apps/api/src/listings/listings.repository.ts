@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository, SelectQueryBuilder } from 'typeorm';
 import {
@@ -17,6 +18,7 @@ import { Listing } from './listing.entity';
 import { ListingPhoto as ListingPhotoEntity } from './listing-photo.entity';
 import { ListingRisk as ListingRiskEntity } from './listing-risk.entity';
 import { encodeCursor, decodeCursor } from './cursor';
+import { buildPhotoUrl } from '../uploads/photo-url';
 
 export type Viewer =
   | { role: null }
@@ -84,10 +86,6 @@ function applyFilters(qb: SelectQueryBuilder<Listing>, query: CatalogQuery): Sel
   return qb;
 }
 
-// s3Key is passed through as-is for primaryPhotoUrl: today it already
-// holds a usable URL (seed data), since no real upload flow exists yet
-// to make it a bare S3 object key. Converting key -> URL is that future
-// issue's job, not this one's.
 function toSummary(listing: Listing, primaryPhotoUrl: string | null): ListingSummary {
   return {
     id: listing.id,
@@ -129,6 +127,7 @@ export class ListingsRepository {
     @InjectRepository(Listing) private readonly repo: Repository<Listing>,
     @InjectRepository(ListingPhotoEntity) private readonly photoRepo: Repository<ListingPhotoEntity>,
     @InjectRepository(ListingRiskEntity) private readonly riskRepo: Repository<ListingRiskEntity>,
+    private readonly config: ConfigService,
   ) {}
 
   // Both writes share one transaction, so a photo insert failure rolls
@@ -218,7 +217,7 @@ export class ListingsRepository {
 
   private async loadPhotos(listingId: string): Promise<ListingPhoto[]> {
     const rows = await this.photoRepo.find({ where: { listingId }, order: { sortOrder: 'ASC' } });
-    return rows.map((row) => ({ url: row.s3Key, sortOrder: row.sortOrder }));
+    return rows.map((row) => ({ url: buildPhotoUrl(row.s3Key, this.config), key: row.s3Key, sortOrder: row.sortOrder }));
   }
 
   private async loadRisk(listingId: string): Promise<ListingRisk | null> {
@@ -268,7 +267,10 @@ export class ListingsRepository {
 
     const primaryPhotos = await this.loadPrimaryPhotos(items.map((listing) => listing.id));
     return {
-      items: items.map((listing) => toSummary(listing, primaryPhotos.get(listing.id) ?? null)),
+      items: items.map((listing) => {
+        const key = primaryPhotos.get(listing.id);
+        return toSummary(listing, key === undefined ? null : buildPhotoUrl(key, this.config));
+      }),
       nextCursor,
     };
   }

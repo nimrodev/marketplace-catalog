@@ -1,12 +1,13 @@
-import type { ButtonHTMLAttributes } from 'react';
+import type { ComponentPropsWithoutRef, ElementType } from 'react';
 import { cx } from '../../cx';
 import styles from './Button.module.css';
 
 export type ButtonVariant = 'default' | 'primary' | 'ghost' | 'danger';
 
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export type ButtonProps<T extends ElementType = 'button'> = {
+  as?: T;
   variant?: ButtonVariant;
-}
+} & Omit<ComponentPropsWithoutRef<T>, 'as' | 'variant'>;
 
 const VARIANT_CLASS: Record<ButtonVariant, string | undefined> = {
   default: undefined,
@@ -15,7 +16,10 @@ const VARIANT_CLASS: Record<ButtonVariant, string | undefined> = {
   danger: styles.danger,
 };
 
-export function Button({ variant = 'default', className, type = 'button', ...props }: ButtonProps) {
+// `as` mirrors Card's polymorphism — an edit link (as={Link}) gets real
+// routing and keyboard focus instead of a disabled-looking button.
+export function Button<T extends ElementType = 'button'>({ as, variant = 'default', className, ...props }: ButtonProps<T>) {
+  const Component = as ?? 'button';
   const classes = cx(styles.btn, VARIANT_CLASS[variant], className);
-  return <button type={type} className={classes} {...props} />;
+  return <Component className={classes} type={as ? undefined : 'button'} {...props} />;
 }

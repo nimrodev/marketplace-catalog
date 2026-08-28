@@ -7,6 +7,8 @@ import { S3Client } from '@aws-sdk/client-s3';
 import { ListingCategory, ListingCondition, ListingOption, ListingStatus } from '@marketplace/shared';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/bootstrap';
+import { buildPhotoUrl } from '../src/uploads/photo-url';
+import { fakeConfigService } from './support/fake-config-service';
 
 const PASSWORD = 'CorrectPass1!';
 
@@ -179,6 +181,6 @@ describe('PATCH /listings/:id (e2e)', () => {
       .send({ photoKeys: [newKey] })
       .expect(200);
 
-    expect(res.body.photos).toEqual([{ url: newKey, sortOrder: 0 }]);
+    expect(res.body.photos).toEqual([{ url: buildPhotoUrl(newKey, fakeConfigService()), key: newKey, sortOrder: 0 }]);
   });
 });

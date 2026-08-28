@@ -14,13 +14,12 @@ export class JwtAuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    if (isPublicRoute(this.reflector, context)) {
-      return true;
-    }
-
+    const isPublic = isPublicRoute(this.reflector, context);
     const req = context.switchToHttp().getRequest<Request>();
     const token: unknown = req.cookies?.[AUTH_COOKIE_NAME];
+
     if (!token || typeof token !== 'string') {
+      if (isPublic) return true;
       throw new UnauthorizedException();
     }
 
@@ -28,7 +27,11 @@ export class JwtAuthGuard implements CanActivate {
       const payload = await this.jwt.verifyAsync<JwtPayload>(token);
       req.user = { id: payload.sub, role: payload.role };
     } catch {
-      // Tampered/expired/malformed token — 401, never a 500.
+      // A public route still resolves a logged-in viewer when there's a
+      // valid cookie (catalog/detail visibility depends on it) — but a
+      // bad cookie there just means "treat as anonymous", not a 401.
+      // A route that requires auth has no such fallback.
+      if (isPublic) return true;
       throw new UnauthorizedException();
     }
 

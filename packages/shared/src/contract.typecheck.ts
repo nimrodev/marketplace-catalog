@@ -42,7 +42,7 @@ const listingDetail: ListingDetail = {
   isNegotiable: true,
   minPrice: 100,
   options: [ListingOption.LOCAL_PICKUP, ListingOption.DELIVERY_AVAILABLE],
-  photos: [{ url: listingSummary.primaryPhotoUrl!, sortOrder: 0 }],
+  photos: [{ url: listingSummary.primaryPhotoUrl!, key: 'listings/user-1/photo-0.jpg', sortOrder: 0 }],
   status: ListingStatus.PUBLISHED,
   rejectionReason: null,
   contributorId: 'user-1',

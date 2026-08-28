@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import type { CatalogQuery, ListingDetail, ListingSummary, Page } from '@marketplace/shared';
+import type { CatalogQuery, CreateListingRequest, ListingDetail, ListingSummary, Page, UpdateListingRequest } from '@marketplace/shared';
 import { apiClient } from './client';
 
 function buildQueryString(query: CatalogQuery): string {
@@ -33,6 +33,14 @@ export function useCatalogQuery(filters: Omit<CatalogQuery, 'cursor' | 'limit'>)
 
 export function fetchListingDetail(id: string): Promise<ListingDetail> {
   return apiClient.get<ListingDetail>(`/listings/${id}`);
+}
+
+export function createListing(input: CreateListingRequest): Promise<ListingDetail> {
+  return apiClient.post<ListingDetail>('/listings', input);
+}
+
+export function updateListing(id: string, input: UpdateListingRequest): Promise<ListingDetail> {
+  return apiClient.patch<ListingDetail>(`/listings/${id}`, input);
 }
 
 export function useListingDetailQuery(id: string | undefined) {

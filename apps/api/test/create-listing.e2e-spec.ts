@@ -8,6 +8,8 @@ import { ListingCategory, ListingCondition, ListingOption, ListingStatus } from 
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/bootstrap';
 import { ListingPhoto } from '../src/listings/listing-photo.entity';
+import { buildPhotoUrl } from '../src/uploads/photo-url';
+import { fakeConfigService } from './support/fake-config-service';
 
 const PASSWORD = 'CorrectPass1!';
 
@@ -90,7 +92,7 @@ describe('POST /listings (e2e)', () => {
 
     expect(res.body.status).toBe(ListingStatus.PENDING);
     expect(res.body.contributorId).toBe(userIds[0]);
-    expect(res.body.photos).toEqual([{ url: key, sortOrder: 0 }]);
+    expect(res.body.photos).toEqual([{ url: buildPhotoUrl(key, fakeConfigService()), key, sortOrder: 0 }]);
 
     const [row] = await dataSource.query('SELECT id, status FROM listings WHERE id = $1', [res.body.id]);
     expect(row).toMatchObject({ id: res.body.id, status: ListingStatus.PENDING });
@@ -113,6 +115,17 @@ describe('POST /listings (e2e)', () => {
       .set('Cookie', cookies.contributor)
       .send({ ...validPayload(), status: ListingStatus.PUBLISHED })
       .expect(400);
+  });
+
+  it('reports layer-1 violations as field errors the form can map back to inputs', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/listings')
+      .set('Cookie', cookies.contributor)
+      .send(validPayload({ title: 'ab', price: -5 }))
+      .expect(400);
+
+    expect(res.body.fieldErrors.title).toEqual(expect.arrayContaining([expect.stringContaining('title')]));
+    expect(res.body.fieldErrors.price).toEqual(expect.arrayContaining([expect.stringContaining('price')]));
   });
 
   it('rejects a client attempting to set contributorId directly — 400, not silently ignored', async () => {

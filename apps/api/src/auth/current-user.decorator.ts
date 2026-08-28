@@ -7,3 +7,10 @@ export const CurrentUser = createParamDecorator((_: unknown, ctx: ExecutionConte
   const req = ctx.switchToHttp().getRequest<Request>();
   return req.user!;
 });
+
+// For @Public() routes: JwtAuthGuard resolves a viewer from the cookie
+// when one is present, but never requires it — so this can be undefined.
+export const OptionalCurrentUser = createParamDecorator((_: unknown, ctx: ExecutionContext): AuthenticatedUser | undefined => {
+  const req = ctx.switchToHttp().getRequest<Request>();
+  return req.user;
+});
