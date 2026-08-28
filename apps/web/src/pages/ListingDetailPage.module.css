@@ -1,0 +1,68 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 460px) 1fr;
+  gap: var(--space-7);
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; }
+}
+
+.badgeRow { display: flex; gap: 6px; margin-bottom: var(--space-3); }
+
+.title { font-size: var(--text-2xl); margin-bottom: var(--space-2); }
+
+.catRow {
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.priceRow {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin: var(--space-3) 0 var(--space-4);
+}
+
+.price {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.negotiable { font-size: var(--text-sm); color: var(--secondary-strong); font-weight: 600; }
+.minPrice { font-size: var(--text-xs); color: var(--text-faint); }
+
+.description {
+  color: var(--text-muted);
+  font-size: var(--text-base);
+  max-width: 60ch;
+  margin: var(--space-5) 0;
+}
+
+.sectionLabel {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  font-weight: 600;
+  margin-bottom: var(--space-3);
+}
+
+.optionRow { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-6); }
+
+.moderatorSection {
+  margin-top: var(--space-6);
+  padding: var(--space-4) var(--space-5);
+  background: var(--risk-high-soft);
+  border: 1px dashed var(--risk-high);
+  border-radius: var(--radius-md);
+}
+
+.moderatorActions { display: flex; gap: var(--space-3); margin-top: var(--space-4); }
+
+.riskList { margin: var(--space-2) 0 0; padding-left: var(--space-4); font-size: var(--text-sm); color: var(--text); }

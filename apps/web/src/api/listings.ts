@@ -1,5 +1,5 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
-import type { CatalogQuery, ListingSummary, Page } from '@marketplace/shared';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import type { CatalogQuery, ListingDetail, ListingSummary, Page } from '@marketplace/shared';
 import { apiClient } from './client';
 
 function buildQueryString(query: CatalogQuery): string {
@@ -28,5 +28,18 @@ export function useCatalogQuery(filters: Omit<CatalogQuery, 'cursor' | 'limit'>)
     queryFn: ({ pageParam }) => fetchCatalogPage({ ...filters, cursor: pageParam ?? undefined }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+  });
+}
+
+export function fetchListingDetail(id: string): Promise<ListingDetail> {
+  return apiClient.get<ListingDetail>(`/listings/${id}`);
+}
+
+export function useListingDetailQuery(id: string | undefined) {
+  return useQuery({
+    queryKey: ['listing', id],
+    queryFn: () => fetchListingDetail(id!),
+    enabled: !!id,
+    retry: false, // a 404 shouldn't be retried into a spinner that never resolves
   });
 }
