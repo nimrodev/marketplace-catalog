@@ -9,12 +9,28 @@ export class ApiError extends Error {
   }
 }
 
+type UnauthorizedListener = () => void;
+const unauthorizedListeners = new Set<UnauthorizedListener>();
+
+// AuthContext subscribes here so any 401, anywhere in the app, collapses
+// to one place: auth state goes to "logged out" without each call site
+// having to know it's responsible for that.
+export function onUnauthorized(listener: UnauthorizedListener): () => void {
+  unauthorizedListeners.add(listener);
+  return () => unauthorizedListeners.delete(listener);
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     credentials: 'include',
     headers: { 'Content-Type': 'application/json', ...init?.headers },
     ...init,
   });
+  // A 401 from the login endpoint means "wrong credentials", not "session
+  // expired" — LoginPage handles that itself, so it must not fire here too.
+  if (res.status === 401 && path !== '/auth/login') {
+    unauthorizedListeners.forEach((listener) => listener());
+  }
   if (!res.ok) {
     throw new ApiError(res.status, await res.text());
   }

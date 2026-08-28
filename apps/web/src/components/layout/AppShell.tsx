@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
 import { cx } from '../cx';
+import { Button } from '../primitives';
 import styles from './AppShell.module.css';
 
 export interface NavItem {
@@ -23,10 +24,11 @@ export interface AppShellProps {
   /** Role-aware slot — renders whatever list it's given, filtering is the caller's job. */
   navItems: NavItem[];
   user?: AppShellUser;
+  onLogout?: () => void;
   children: ReactNode;
 }
 
-export function AppShell({ brand, tagline, navItems, user, children }: AppShellProps) {
+export function AppShell({ brand, tagline, navItems, user, onLogout, children }: AppShellProps) {
   return (
     <div className={styles.shell}>
       <aside className={styles.sidebar}>
@@ -60,6 +62,11 @@ export function AppShell({ brand, tagline, navItems, user, children }: AppShellP
                 <div className={styles.userRole}>{user.roleLabel}</div>
               </div>
             </div>
+            {onLogout && (
+              <Button variant="ghost" onClick={onLogout}>
+                Log out
+              </Button>
+            )}
           </div>
         )}
       </aside>
