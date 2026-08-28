@@ -14,12 +14,12 @@ import {
   MinLength,
   Validate,
 } from 'class-validator';
-import { LISTING_LIMITS, ListingCategory, ListingCondition, ListingOption } from '@marketplace/shared';
+import { CreateListingRequest, LISTING_LIMITS, ListingCategory, ListingCondition, ListingOption } from '@marketplace/shared';
 import { MinPriceConstraint } from './min-price.validator';
 
-// Layer 1 validation (PLAN.md §4.1) — mirrors CreateListingRequest
-// field-for-field; limits come from LISTING_LIMITS, the single source.
-export class CreateListingRequestDto {
+// Layer 1 validation — mirrors CreateListingRequest field-for-field.
+// No status/contributorId: with forbidNonWhitelisted, sending either 400s.
+export class CreateListingRequestDto implements CreateListingRequest {
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
   @MinLength(LISTING_LIMITS.title.min)

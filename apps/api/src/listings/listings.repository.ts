@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository, SelectQueryBuilder } from 'typeorm';
 import {
   CatalogQuery,
+  CreateListingRequest,
+  LISTING_LIMITS,
   ListingDetail,
   ListingPhoto,
   ListingRisk,
@@ -128,6 +130,39 @@ export class ListingsRepository {
     @InjectRepository(ListingPhotoEntity) private readonly photoRepo: Repository<ListingPhotoEntity>,
     @InjectRepository(ListingRiskEntity) private readonly riskRepo: Repository<ListingRiskEntity>,
   ) {}
+
+  // Both writes share one transaction, so a photo insert failure rolls
+  // back the listing too.
+  async create(contributorId: string, input: CreateListingRequest): Promise<ListingDetail> {
+    const listing = await this.repo.manager.transaction(async (manager) => {
+      const listingRepo = manager.getRepository(Listing);
+      const photoRepo = manager.getRepository(ListingPhotoEntity);
+
+      const entity = listingRepo.create({
+        title: input.title,
+        description: input.description,
+        price: input.price.toFixed(LISTING_LIMITS.price.maxDecimals),
+        condition: input.condition,
+        category: input.category,
+        isNegotiable: input.isNegotiable,
+        minPrice: input.minPrice === undefined ? null : input.minPrice.toFixed(LISTING_LIMITS.price.maxDecimals),
+        options: input.options,
+        contributorId,
+        status: ListingStatus.PENDING,
+      });
+      const saved = await listingRepo.save(entity);
+
+      const photos = input.photoKeys.map((s3Key, sortOrder) =>
+        photoRepo.create({ listingId: saved.id, s3Key, sortOrder }),
+      );
+      await photoRepo.save(photos);
+
+      return saved;
+    });
+
+    const photos = await this.loadPhotos(listing.id);
+    return toDetail(listing, photos, null);
+  }
 
   // null for "doesn't exist" and "exists but hidden" alike — no signal
   // to leak, so no path to a 403.

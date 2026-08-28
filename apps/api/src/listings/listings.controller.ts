@@ -1,16 +1,24 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Get,
+  HttpCode,
   NotFoundException,
   Param,
   ParseUUIDPipe,
+  Post,
   Query,
 } from '@nestjs/common';
-import { ListingDetail, ListingSummary, Page } from '@marketplace/shared';
+import { ListingDetail, ListingSummary, Page, UserRole } from '@marketplace/shared';
+import { CurrentUser } from '../auth/current-user.decorator';
+import { AuthenticatedUser } from '../auth/jwt-payload';
 import { Public } from '../auth/public.decorator';
+import { Roles } from '../auth/roles.decorator';
 import { InvalidCursorError } from './cursor';
+import { CreateListingRequestDto } from './dto/create-listing-request.dto';
 import { ListingsRepository } from './listings.repository';
+import { ListingsService } from './listings.service';
 import { parseCatalogQuery } from './parse-catalog-query';
 
 // Every viewer is anonymous for now — the repository already supports
@@ -22,7 +30,10 @@ const ANONYMOUS = { role: null } as const;
 
 @Controller('listings')
 export class ListingsController {
-  constructor(private readonly listings: ListingsRepository) {}
+  constructor(
+    private readonly listings: ListingsRepository,
+    private readonly listingsService: ListingsService,
+  ) {}
 
   @Public()
   @Get()
@@ -46,5 +57,13 @@ export class ListingsController {
       throw new NotFoundException();
     }
     return listing;
+  }
+
+  // CONTRIBUTOR is the lowest rank, so moderators can create too.
+  @Roles(UserRole.CONTRIBUTOR)
+  @Post()
+  @HttpCode(201)
+  async create(@Body() dto: CreateListingRequestDto, @CurrentUser() user: AuthenticatedUser): Promise<ListingDetail> {
+    return this.listingsService.create(user.id, dto);
   }
 }
