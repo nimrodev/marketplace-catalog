@@ -37,6 +37,8 @@ jobs:
       # reports SQS "down" against this placeholder, which is fine: the e2e
       # suite only asserts on response shape, not a specific status.
       SQS_PRESCREEN_QUEUE_URL: https://sqs.eu-central-1.amazonaws.com/000000000000/ci-placeholder
+      # CI-only value — signs test JWTs, never used against a real deploy.
+      JWT_SECRET: ci-test-secret-not-for-production-use
 
     steps:
       - uses: actions/checkout@v4
