@@ -106,10 +106,10 @@ jobs:
       - name: Sync app to the instance
         if: steps.target.outputs.ready == 'true'
         run: |
-          ssh -o StrictHostKeyChecking=accept-new "ubuntu@${{ secrets.EC2_HOST }}" 'mkdir -p ~/app'
+          ssh -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=30 -o ServerAliveCountMax=10 "ubuntu@${{ secrets.EC2_HOST }}" 'mkdir -p ~/app'
           rsync -az --delete \
             --exclude='.git' --exclude='node_modules' --exclude='.env' --exclude='infra/ec2' \
-            -e 'ssh -o StrictHostKeyChecking=accept-new' \
+            -e 'ssh -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=30 -o ServerAliveCountMax=10' \
             ./ "ubuntu@${{ secrets.EC2_HOST }}:~/app/"
 
       # Migrations run against the already-built image's compiled dist/,
@@ -121,10 +121,15 @@ jobs:
       - name: Deploy
         if: steps.target.outputs.ready == 'true'
         run: |
-          ssh -o StrictHostKeyChecking=accept-new "ubuntu@${{ secrets.EC2_HOST }}" '
+          ssh -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=30 -o ServerAliveCountMax=10 "ubuntu@${{ secrets.EC2_HOST }}" '
             set -euo pipefail
             cd ~/app
-            docker compose build
+            # Sequential, not `docker compose build` (parallel by default) -
+            # t4g.micro has ~900MB RAM and no swap, so building both images
+            # at once risks OOM. ServerAliveInterval above keeps the SSH
+            # session alive through the silent stretches either way.
+            docker compose build api
+            docker compose build caddy
             docker compose run --rm api node_modules/.bin/typeorm-ts-node-commonjs migration:run -d dist/database/data-source.js
             docker compose up -d
           '
