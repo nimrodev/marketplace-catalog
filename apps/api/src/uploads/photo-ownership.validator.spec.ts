@@ -52,21 +52,21 @@ describe('PhotoOwnershipValidator', () => {
     const key = buildPhotoKey(userId, 'image/jpeg');
     sendSpy.mockRejectedValue(new Error('NotFound'));
 
-    await expect(validator.validate(userId, [key])).rejects.toBeInstanceOf(BadRequestException);
+    await expect(validator.validate(userId, [key])).rejects.toThrow(/was not found/i);
   });
 
   it('rejects an oversized object', async () => {
     const key = buildPhotoKey(userId, 'image/jpeg');
     sendSpy.mockResolvedValue({ ContentLength: LISTING_LIMITS.photos.maxBytes + 1, ContentType: 'image/jpeg' });
 
-    await expect(validator.validate(userId, [key])).rejects.toBeInstanceOf(BadRequestException);
+    await expect(validator.validate(userId, [key])).rejects.toThrow(/exceeds/i);
   });
 
   it('rejects an object with a disallowed content type', async () => {
     const key = buildPhotoKey(userId, 'image/jpeg');
     sendSpy.mockResolvedValue({ ContentLength: 1024, ContentType: 'application/pdf' });
 
-    await expect(validator.validate(userId, [key])).rejects.toBeInstanceOf(BadRequestException);
+    await expect(validator.validate(userId, [key])).rejects.toThrow(/unsupported content type/i);
   });
 
   it('resolves for a well-formed, existing, correctly-sized and typed key', async () => {

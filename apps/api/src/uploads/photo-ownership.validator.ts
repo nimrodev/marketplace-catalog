@@ -43,6 +43,10 @@ export class PhotoOwnershipValidator {
         throw new BadRequestException(`Photo "${key}" does not belong to you or is not a valid photo key.`);
       }
 
+      // Fail-closed: any HeadObject error (missing object, throttling, a
+      // transient network blip) is treated as "not found" rather than
+      // distinguished — a security validator errs toward rejecting, not
+      // toward guessing that an unexpected failure is safe to ignore.
       const head = await this.client.send(new HeadObjectCommand({ Bucket: this.bucket, Key: key })).catch(() => null);
       if (!head) {
         throw new BadRequestException(`Photo "${key}" was not found.`);

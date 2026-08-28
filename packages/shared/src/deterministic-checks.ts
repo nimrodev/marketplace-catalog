@@ -16,6 +16,10 @@ export interface DeterministicCheckResult {
 // Word-boundary, case-insensitive — hard hits reject the submission
 // outright (MAR-17), so this list stays narrow and literal rather than
 // broad/fuzzy; a false positive here blocks a legitimate listing.
+// Known gap, not a silent one: ASCII \b doesn't reason about Unicode, so
+// a zero-width character inserted mid-word or a homoglyph substitution
+// slips through undetected. Acceptable for a deterministic first pass
+// backed by the AI model (MAR-32/34) — not the last line of defense.
 const HARD_HIT_PATTERNS: { reason: string; pattern: RegExp }[] = [
   { reason: 'weapons', pattern: /\b(firearms?|guns?|rifles?|pistols?|ammunition|ammo|explosives?)\b/i },
   { reason: 'drugs', pattern: /\b(cocaine|heroin|methamphetamine|meth|mdma|fentanyl)\b/i },
