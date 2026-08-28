@@ -1,0 +1,23 @@
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.interactive { cursor: pointer; }
+
+.interactive:hover,
+.interactive:focus-visible {
+  transform: translateY(-3px);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.interactive:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-sm), var(--focus-ring);
+}

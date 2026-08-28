@@ -1,0 +1,96 @@
+/* Design tokens, single theme, values from the approved MAR-49 mockup.
+   Deviations from the mockup, both deliberate: the four `-strong` colors
+   (computed WCAG AA text-contrast fixes for badge text-on-soft-tint) and
+   `--focus-ring` (the mockup is static, so it has no interactive states
+   to source a focus style from). */
+:root {
+  /* Canvas / text */
+  --bg: #FAF9F4;
+  --surface: #FFFFFF;
+  --surface-2: #EFEDE4;
+  --ink: #15130F;
+  --text: #15130F;
+  --text-muted: #5C594E;
+  --text-faint: #8B8778;
+  --border: #E2DFD1;
+  --border-strong: #CFCBB9;
+
+  /* Chrome (sidebar) — a fixed dark panel, not a theme toggle */
+  --chrome-bg: #15130F;
+  --chrome-surface: #1E1B14;
+  --chrome-text: #F6F4EF;
+  --chrome-text-muted: #A6A192;
+  --chrome-border: #2E2B22;
+  --chrome-active-bg: #262454;
+  --chrome-accent: #7C89E0;
+
+  /* Brand */
+  --accent: #2B3A99;
+  --accent-strong: #1F2B75;
+  --accent-soft: #E3E6F6;
+  --accent-contrast: #FFFFFF;
+  --secondary: #E0552C;
+  --secondary-strong: #C2451E; /* AA text variant */
+  --secondary-soft: #FBE3D9;
+
+  /* Semantic: risk */
+  --risk-low: #1F8A6F;
+  --risk-low-strong: #146B54; /* AA text variant */
+  --risk-low-soft: #DBEEE8;
+  --risk-medium: #C2831A;
+  --risk-medium-strong: #8C5D0E; /* AA text variant */
+  --risk-medium-soft: #F3E4C6;
+  --risk-high: #C22F2F;
+  --risk-high-strong: #9A2323; /* AA text variant */
+  --risk-high-soft: #F5DAD8;
+
+  /* Semantic: status (mirrors risk hues per the mockup's own reuse) */
+  --status-pending: #C2831A;
+  --status-pending-strong: var(--risk-medium-strong);
+  --status-pending-soft: #F3E4C6;
+  --status-published: #1F8A6F;
+  --status-published-strong: var(--risk-low-strong);
+  --status-published-soft: #DBEEE8;
+  --status-rejected: #C22F2F;
+  --status-rejected-strong: var(--risk-high-strong);
+  --status-rejected-soft: #F5DAD8;
+
+  /* Radii — crisper, less "soft app," more poster/print */
+  --radius-sm: 4px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* Type scale */
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 1rem;
+  --text-md: 1.125rem;
+  --text-lg: 1.375rem;
+  --text-xl: 1.75rem;
+  --text-2xl: 2.25rem;
+  --text-3xl: 3rem;
+
+  /* Type faces — elegant, clear, one voice each; system stacks only, no
+     external font loading */
+  --font-display: Didot, "Bodoni MT", "Big Caslon Medium", "Hoefler Text", serif;
+  --font-body: "Avenir Next", "Century Gothic", sans-serif;
+  --font-mono: Menlo, Consolas, monospace;
+
+  /* Shadows — the two elevation values the mockup actually uses */
+  --shadow-sm: 0 14px 30px -20px rgba(21, 19, 15, 0.4);
+  --shadow-md: 0 18px 34px -22px rgba(21, 19, 15, 0.35);
+
+  /* Focus ring — one definition, referenced by every interactive primitive */
+  --focus-ring: 0 0 0 3px var(--accent-soft), 0 0 0 1px var(--accent);
+}
