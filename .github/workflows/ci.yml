@@ -54,8 +54,6 @@ jobs:
 
       - run: pnpm build
 
-      # No-op until MAR-5/MAR-8 add a real `migrate` script — same
-      # --if-present convention as every other root script.
       - run: pnpm migrate
 
       - run: pnpm test
@@ -80,12 +78,12 @@ jobs:
             echo "ready=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # MAR-43 (EC2 provisioning) hasn't landed yet, so there is nowhere to
-      # deploy to. This step keeps the pipeline green and visible about why,
-      # instead of failing on missing secrets every push until it does.
-      - name: Skip deploy (no target yet)
+      # Keeps the pipeline green and visible about why, instead of failing
+      # on missing secrets, if EC2_HOST/EC2_SSH_KEY are ever unset again
+      # (e.g. rotating to a new AWS account).
+      - name: Skip deploy (no target configured)
         if: steps.target.outputs.ready != 'true'
-        run: echo "::notice::EC2_HOST/EC2_SSH_KEY not configured yet (MAR-43 pending) — skipping deploy."
+        run: echo "::notice::EC2_HOST/EC2_SSH_KEY not configured — skipping deploy."
 
       - name: Checkout
         if: steps.target.outputs.ready == 'true'
@@ -106,16 +104,21 @@ jobs:
             -e 'ssh -o StrictHostKeyChecking=accept-new' \
             ./ "ubuntu@${{ secrets.EC2_HOST }}:~/app/"
 
-      # MAR-5/MAR-8 haven't landed yet, so there's no migration mechanism
-      # (and no pnpm/dev deps in the pruned prod image to run one with) —
-      # the migration step lands here once that exists.
+      # Migrations run against the already-built image's compiled dist/,
+      # not via `pnpm run` — the pruned prod image (api.Dockerfile) has no
+      # src/ and an unresolved workspace:* reference, so `pnpm run
+      # migration:run` fails its own dependency check before the script
+      # body runs. This exact command is documented and was verified
+      # against the built image in data-source.ts's own comment.
       - name: Deploy
         if: steps.target.outputs.ready == 'true'
         run: |
           ssh -o StrictHostKeyChecking=accept-new "ubuntu@${{ secrets.EC2_HOST }}" '
             set -euo pipefail
             cd ~/app
-            docker compose up -d --build
+            docker compose build
+            docker compose run --rm api node_modules/.bin/typeorm-ts-node-commonjs migration:run -d dist/database/data-source.js
+            docker compose up -d
           '
 
       - name: Smoke check
