@@ -7,6 +7,7 @@ describe('envValidationSchema', () => {
     DATABASE_URL: 'postgresql://user:pass@host:5432/db',
     AWS_REGION: 'eu-central-1',
     SQS_PRESCREEN_QUEUE_URL: 'https://sqs.eu-central-1.amazonaws.com/123456789012/queue',
+    S3_PHOTOS_BUCKET: 'marketplace-catalog-photos',
     JWT_SECRET: 'test-secret',
   };
 
@@ -41,6 +42,13 @@ describe('envValidationSchema', () => {
     const { error } = envValidationSchema.validate(rest, { abortEarly: false });
     expect(error).toBeDefined();
     expect(error!.message).toMatch(/JWT_SECRET/);
+  });
+
+  it('fails fast when S3_PHOTOS_BUCKET is missing', () => {
+    const { S3_PHOTOS_BUCKET, ...rest } = validEnv;
+    const { error } = envValidationSchema.validate(rest, { abortEarly: false });
+    expect(error).toBeDefined();
+    expect(error!.message).toMatch(/S3_PHOTOS_BUCKET/);
   });
 
   it('rejects malformed config (DATABASE_URL not a URI)', () => {

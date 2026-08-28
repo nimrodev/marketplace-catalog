@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './health/health.module';
 import { ListingsModule } from './listings/listings.module';
+import { UploadsModule } from './uploads/uploads.module';
 import { envValidationSchema } from './config/env.validation';
 import { buildDataSourceOptions } from './database/data-source-options';
 
@@ -26,9 +28,14 @@ import { buildDataSourceOptions } from './database/data-source-options';
       // so the two can never define conflicting schema rules.
       useFactory: (config: ConfigService) => buildDataSourceOptions(config.getOrThrow('DATABASE_URL')),
     }),
+    // Registered once here (forRoot is root-level config, not per-feature) —
+    // consumers (currently just UploadsModule) apply it locally via
+    // @UseGuards, not by re-registering the module.
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 20 }]),
     HealthModule,
     ListingsModule,
     AuthModule,
+    UploadsModule,
   ],
   controllers: [AppController],
   providers: [],

@@ -37,6 +37,12 @@ jobs:
       # reports SQS "down" against this placeholder, which is fine: the e2e
       # suite only asserts on response shape, not a specific status.
       SQS_PRESCREEN_QUEUE_URL: https://sqs.eu-central-1.amazonaws.com/000000000000/ci-placeholder
+      S3_PHOTOS_BUCKET: ci-placeholder-bucket
+      # Presigning is pure local SigV4 math — no network call to AWS — so
+      # any syntactically valid key pair lets it succeed. Never used against
+      # a real bucket; the CI runner has no other AWS credentials at all.
+      AWS_ACCESS_KEY_ID: AKIAIOSFODNN7CIDUMMY
+      AWS_SECRET_ACCESS_KEY: ci-dummy-secret-not-a-real-aws-key
       # CI-only value — signs test JWTs, never used against a real deploy.
       JWT_SECRET: ci-test-secret-not-for-production-use
 

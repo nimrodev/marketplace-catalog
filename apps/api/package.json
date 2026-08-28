@@ -20,7 +20,9 @@
     "seed": "node dist/database/seed.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.687.0",
     "@aws-sdk/client-sqs": "^3.687.0",
+    "@aws-sdk/s3-request-presigner": "^3.687.0",
     "@faker-js/faker": "^9.2.0",
     "@marketplace/shared": "workspace:*",
     "@nestjs/common": "^10.4.6",
@@ -29,6 +31,7 @@
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/mapped-types": "^2.0.5",
     "@nestjs/platform-express": "^10.4.6",
+    "@nestjs/throttler": "^6.2.1",
     "@nestjs/typeorm": "^10.0.2",
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
