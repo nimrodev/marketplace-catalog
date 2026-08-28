@@ -1,7 +1,11 @@
 import { Controller, Get, HttpCode, HttpStatus, ServiceUnavailableException } from '@nestjs/common';
+import { Public } from '../auth/public.decorator';
 import { DatabaseHealthIndicator } from './database-health.indicator';
 import { SqsHealthIndicator } from './sqs-health.indicator';
 
+// Infra probes (Docker HEALTHCHECK, load balancer target group) hit these
+// unauthenticated — both routes stay public.
+@Public()
 @Controller('health')
 export class HealthController {
   constructor(

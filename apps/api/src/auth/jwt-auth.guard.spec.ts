@@ -1,5 +1,6 @@
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { Reflector } from '@nestjs/core';
 import { UserRole } from '@marketplace/shared';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { AUTH_COOKIE_NAME } from './session.constants';
@@ -8,16 +9,28 @@ function buildContext(cookies: Record<string, string>): ExecutionContext {
   const req: { cookies: Record<string, string>; user?: unknown } = { cookies };
   return {
     switchToHttp: () => ({ getRequest: () => req }),
+    getHandler: () => undefined,
+    getClass: () => undefined,
   } as unknown as ExecutionContext;
 }
 
 describe('JwtAuthGuard', () => {
   let jwt: jest.Mocked<JwtService>;
+  let reflector: jest.Mocked<Reflector>;
   let guard: JwtAuthGuard;
 
   beforeEach(() => {
     jwt = { verifyAsync: jest.fn() } as unknown as jest.Mocked<JwtService>;
-    guard = new JwtAuthGuard(jwt);
+    reflector = { getAllAndOverride: jest.fn().mockReturnValue(false) } as unknown as jest.Mocked<Reflector>;
+    guard = new JwtAuthGuard(jwt, reflector);
+  });
+
+  it('lets a @Public() route through without checking the cookie at all', async () => {
+    reflector.getAllAndOverride.mockReturnValueOnce(true);
+    const context = buildContext({});
+
+    await expect(guard.canActivate(context)).resolves.toBe(true);
+    expect(jwt.verifyAsync).not.toHaveBeenCalled();
   });
 
   it('401s with no cookie at all', async () => {

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Post, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Post, Res } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { CookieOptions, Response } from 'express';
 import { AuthUser } from '@marketplace/shared';
@@ -6,7 +6,7 @@ import { AuthService } from './auth.service';
 import { CurrentUser } from './current-user.decorator';
 import { LoginRequestDto } from './dto/login-request.dto';
 import { AuthenticatedUser } from './jwt-payload';
-import { JwtAuthGuard } from './jwt-auth.guard';
+import { Public } from './public.decorator';
 import { AUTH_COOKIE_NAME, SESSION_MAX_AGE_MS } from './session.constants';
 
 @Controller('auth')
@@ -28,6 +28,7 @@ export class AuthController {
     };
   }
 
+  @Public()
   @Post('login')
   @HttpCode(200)
   async login(@Body() dto: LoginRequestDto, @Res({ passthrough: true }) res: Response): Promise<AuthUser> {
@@ -37,6 +38,7 @@ export class AuthController {
     return user;
   }
 
+  @Public()
   @Post('logout')
   @HttpCode(200)
   logout(@Res({ passthrough: true }) res: Response): { success: true } {
@@ -44,8 +46,8 @@ export class AuthController {
     return { success: true };
   }
 
+  // No @Public() — protected by the global JwtAuthGuard by default (MAR-14).
   @Get('me')
-  @UseGuards(JwtAuthGuard)
   async me(@CurrentUser() user: AuthenticatedUser): Promise<AuthUser> {
     // Re-fetch from the DB (rather than trusting the token's role claim)
     // so an account deactivated since login loses access on this call,

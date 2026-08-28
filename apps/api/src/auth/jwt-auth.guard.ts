@@ -1,14 +1,23 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 import { AUTH_COOKIE_NAME } from './session.constants';
 import { JwtPayload } from './jwt-payload';
+import { isPublicRoute } from './is-public-route';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  constructor(private readonly jwt: JwtService) {}
+  constructor(
+    private readonly jwt: JwtService,
+    private readonly reflector: Reflector,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    if (isPublicRoute(this.reflector, context)) {
+      return true;
+    }
+
     const req = context.switchToHttp().getRequest<Request>();
     const token: unknown = req.cookies?.[AUTH_COOKIE_NAME];
     if (!token || typeof token !== 'string') {
