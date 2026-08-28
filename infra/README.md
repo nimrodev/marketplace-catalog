@@ -20,6 +20,14 @@ blocked by AWS account verification, so this was (re-)provisioned here.
 No static AWS credentials on the box — the instance role supplies short-lived,
 auto-rotating credentials via instance metadata.
 
+**Port 22 is open to `0.0.0.0/0`, not restricted to one IP.** GitHub Actions
+runners connect from rotating, unpredictable IPs, so a static-IP allowlist
+blocks CI deploys entirely (confirmed: SSH timed out from the runner).
+Auth is still key-only (no password auth), so this is a bounded, accepted
+tradeoff for this project's scope, not an oversight — the properly hardened
+answer is OIDC + AWS SSM Run Command instead of SSH, tracked as a follow-up
+issue rather than done under deploy pressure.
+
 **Recreating:** `instance-role-policy.json`, `trust-policy.json`, and `user-data.sh`
 in this directory are the actual artifacts used; wire them up with `iam create-role`
 / `create-instance-profile` / `ec2 run-instances --user-data file://user-data.sh`
