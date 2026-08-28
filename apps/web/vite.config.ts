@@ -3,6 +3,11 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  // Same CJS interop problem as build.commonjsOptions below, but for the
+  // dev server, which doesn't pre-bundle linked workspace packages by default.
+  optimizeDeps: {
+    include: ['@marketplace/shared'],
+  },
   server: {
     // The browser only ever talks to localhost:5173 here — the proxy makes
     // /api same-origin from its point of view, matching production behind
