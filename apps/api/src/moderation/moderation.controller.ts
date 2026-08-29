@@ -1,14 +1,34 @@
-import { Body, Controller, Param, ParseUUIDPipe, Post } from '@nestjs/common';
-import { ListingDetail, UserRole } from '@marketplace/shared';
+import { BadRequestException, Body, Controller, Get, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import { ListingDetail, ModerationQueueItem, Page, UserRole } from '@marketplace/shared';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { AuthenticatedUser } from '../auth/jwt-payload';
 import { Roles } from '../auth/roles.decorator';
 import { RejectRequestDto } from './dto/reject-request.dto';
+import { InvalidQueueCursorError } from './queue-cursor';
+import { ModerationRepository } from './moderation.repository';
 import { ModerationService } from './moderation.service';
+import { parseQueueQuery } from './parse-queue-query';
 
 @Controller('moderation')
 export class ModerationController {
-  constructor(private readonly moderation: ModerationService) {}
+  constructor(
+    private readonly moderation: ModerationService,
+    private readonly queue: ModerationRepository,
+  ) {}
+
+  @Roles(UserRole.MODERATOR)
+  @Get('queue')
+  async findQueue(@Query() rawQuery: Record<string, unknown>): Promise<Page<ModerationQueueItem>> {
+    const query = parseQueueQuery(rawQuery);
+    try {
+      return await this.queue.findQueue(query);
+    } catch (err) {
+      if (err instanceof InvalidQueueCursorError) {
+        throw new BadRequestException('Invalid cursor');
+      }
+      throw err;
+    }
+  }
 
   @Roles(UserRole.MODERATOR)
   @Post(':id/approve')
