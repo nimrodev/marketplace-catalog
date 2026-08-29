@@ -5,15 +5,15 @@
    to source a focus style from). */
 :root {
   /* Canvas / text */
-  --bg: #FAF9F4;
+  --bg: #F4F5F7;
   --surface: #FFFFFF;
-  --surface-2: #EFEDE4;
+  --surface-2: #EAEBEF;
   --ink: #15130F;
   --text: #15130F;
   --text-muted: #5C594E;
   --text-faint: #8B8778;
-  --border: #E2DFD1;
-  --border-strong: #CFCBB9;
+  --border: #E1E3E8;
+  --border-strong: #CBCED6;
 
   /* Chrome (sidebar) — a fixed dark panel, not a theme toggle */
   --chrome-bg: #15130F;
