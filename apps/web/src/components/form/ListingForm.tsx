@@ -12,6 +12,7 @@ import { createListing, updateListing } from '../../api/listings';
 import { categoryLabel, optionLabel } from '../detail/labels';
 import { conditionLabel } from '../catalog/conditionTone';
 import { Button, Input, Select } from '../primitives';
+import { generateLocalId } from './localId';
 import { PhotoUploader, type PhotoItem } from './PhotoUploader';
 import { hasFieldErrors, validateListingFields, type ListingFieldErrors, type ListingFormValues } from './validateListing';
 import styles from './ListingForm.module.css';
@@ -37,7 +38,7 @@ function initialValues(listing?: ListingDetail): ListingFormValues {
 function initialPhotos(listing?: ListingDetail): PhotoItem[] {
   if (!listing) return [];
   return listing.photos.map((photo) => ({
-    id: crypto.randomUUID(),
+    id: generateLocalId(),
     key: photo.key,
     previewUrl: photo.url,
     status: 'done',

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { LISTING_LIMITS, type PhotoContentType } from '@marketplace/shared';
 import { presignPhotoUpload, uploadPhotoToS3 } from '../../api/uploads';
 import { Button } from '../primitives';
+import { generateLocalId } from './localId';
 import { validatePhotoFile } from './validateListing';
 import styles from './PhotoUploader.module.css';
 
@@ -68,7 +69,7 @@ export function PhotoUploader({ photos, onChange, error }: PhotoUploaderProps) {
       const validationError = validatePhotoFile(file);
       const previewUrl = URL.createObjectURL(file);
       createdUrls.current.add(previewUrl);
-      const id = crypto.randomUUID();
+      const id = generateLocalId();
       if (validationError) {
         return { id, key: null, previewUrl, status: 'error', progress: 0, error: validationError };
       }
