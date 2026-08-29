@@ -10,6 +10,15 @@ services:
     expose:
       - '3000'
 
+  worker:
+    platform: linux/arm64
+    build:
+      context: .
+      dockerfile: infra/docker/worker.Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+
   caddy:
     platform: linux/arm64
     build:
