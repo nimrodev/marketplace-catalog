@@ -27,12 +27,13 @@ describe('Catalog query (e2e)', () => {
       rejection_reason: null,
       contributor_id: contributorId,
       created_at: new Date(),
+      updated_at: new Date(),
       ...overrides,
     };
     const [inserted] = await dataSource.query(
       `INSERT INTO listings
-         (title, description, price, condition, category, is_negotiable, min_price, options, status, rejection_reason, contributor_id, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+         (title, description, price, condition, category, is_negotiable, min_price, options, status, rejection_reason, contributor_id, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
        RETURNING id`,
       [
         row.title,
@@ -47,6 +48,7 @@ describe('Catalog query (e2e)', () => {
         row.rejection_reason,
         row.contributor_id,
         row.created_at,
+        row.updated_at,
       ],
     );
     return inserted.id;
@@ -126,14 +128,14 @@ describe('Catalog query (e2e)', () => {
   describe('pagination stability', () => {
     it('a new listing published mid-scroll causes no duplicates and no skips on the next page', async () => {
       // Far in the future so these sort above the bulk rows (inserted
-      // with created_at defaulting to now()) regardless of the actual
+      // with updated_at defaulting to now()) regardless of the actual
       // current date.
       const base = Date.parse('2999-06-01T00:00:00.000Z');
       const ids: string[] = [];
       for (let i = 0; i < 10; i++) {
-        ids.push(await insertListing({ title: `Stability ${i}`, created_at: new Date(base + i * 1000) }));
+        ids.push(await insertListing({ title: `Stability ${i}`, updated_at: new Date(base + i * 1000) }));
       }
-      // ids[9] is newest (created_at = base+9000ms) -> first page.
+      // ids[9] is newest (updated_at = base+9000ms) -> first page.
 
       const page1 = await repo.findCatalogPage({ limit: 4 }, anonymous);
       const page1Ids = page1.items.filter((l) => ids.includes(l.id)).map((l) => l.id);
@@ -142,7 +144,7 @@ describe('Catalog query (e2e)', () => {
 
       // Simulate a new listing published while the user is on page 1 —
       // it lands at the head of the ordering, newer than everything.
-      const newHeadId = await insertListing({ title: 'Published mid-scroll', created_at: new Date(base + 20_000) });
+      const newHeadId = await insertListing({ title: 'Published mid-scroll', updated_at: new Date(base + 20_000) });
 
       const page2 = await repo.findCatalogPage({ limit: 4, cursor: page1.nextCursor! }, anonymous);
       const page2Ids = page2.items.filter((l) => ids.includes(l.id)).map((l) => l.id);
@@ -266,8 +268,8 @@ describe('Catalog query (e2e)', () => {
       const plan = await explain(
         `SELECT * FROM listings
          WHERE status = 'PUBLISHED' AND deleted_at IS NULL
-           AND (created_at, id) < ($1, $2)
-         ORDER BY created_at DESC, id DESC LIMIT 24`,
+           AND (updated_at, id) < ($1, $2)
+         ORDER BY updated_at DESC, id DESC LIMIT 24`,
         ['2026-01-01T00:00:00.000000Z', '00000000-0000-0000-0000-000000000000'],
       );
       expect(plan).toContain('IDX_listings_catalog_keyset');
