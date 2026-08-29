@@ -126,6 +126,8 @@ jobs:
           file: infra/docker/api.Dockerfile
           platforms: linux/arm64
           push: true
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
           tags: |
             ghcr.io/${{ github.repository_owner }}/marketplace-catalog-api:latest
             ghcr.io/${{ github.repository_owner }}/marketplace-catalog-api:${{ github.sha }}
@@ -137,6 +139,8 @@ jobs:
           file: infra/docker/worker.Dockerfile
           platforms: linux/arm64
           push: true
+          cache-from: type=gha,scope=worker
+          cache-to: type=gha,mode=max,scope=worker
           tags: |
             ghcr.io/${{ github.repository_owner }}/marketplace-catalog-worker:latest
             ghcr.io/${{ github.repository_owner }}/marketplace-catalog-worker:${{ github.sha }}
@@ -148,6 +152,8 @@ jobs:
           file: infra/docker/caddy.Dockerfile
           platforms: linux/arm64
           push: true
+          cache-from: type=gha,scope=caddy
+          cache-to: type=gha,mode=max,scope=caddy
           tags: |
             ghcr.io/${{ github.repository_owner }}/marketplace-catalog-caddy:latest
             ghcr.io/${{ github.repository_owner }}/marketplace-catalog-caddy:${{ github.sha }}
