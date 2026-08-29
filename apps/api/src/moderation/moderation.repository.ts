@@ -35,6 +35,7 @@ interface QueueRow {
   category: ModerationQueueItem['category'];
   contributor_email: string;
   raw_created_at: string;
+  raw_updated_at: string;
   primary_photo_key: string | null;
   risk_level: RiskLevel | null;
   risk_reasons: string[] | null;
@@ -65,24 +66,25 @@ export class ModerationRepository {
     }
 
     if (query.cursor) {
-      // Not a single tuple comparison: created_at sorts DESC while risk
+      // Not a single tuple comparison: updated_at sorts DESC while risk
       // rank and id sort ASC, and Postgres row-constructor comparison only
       // supports one direction across all columns. Three OR'd clauses
       // express "strictly after the cursor row in this mixed-direction
       // order" instead.
       const cursor = decodeQueueCursor(query.cursor);
-      params.push(cursor.riskRank, cursor.createdAt, cursor.id);
-      const [rankParam, createdAtParam, idParam] = [params.length - 2, params.length - 1, params.length];
+      params.push(cursor.riskRank, cursor.updatedAt, cursor.id);
+      const [rankParam, updatedAtParam, idParam] = [params.length - 2, params.length - 1, params.length];
       conditions.push(
         `((${RISK_RANK_SQL}) > $${rankParam}
-          OR ((${RISK_RANK_SQL}) = $${rankParam} AND l.created_at < $${createdAtParam}::timestamptz)
-          OR ((${RISK_RANK_SQL}) = $${rankParam} AND l.created_at = $${createdAtParam}::timestamptz AND l.id > $${idParam}))`,
+          OR ((${RISK_RANK_SQL}) = $${rankParam} AND l.updated_at < $${updatedAtParam}::timestamptz)
+          OR ((${RISK_RANK_SQL}) = $${rankParam} AND l.updated_at = $${updatedAtParam}::timestamptz AND l.id > $${idParam}))`,
       );
     }
 
     params.push(limit + 1);
     const rows: QueueRow[] = await this.repo.manager.query(
-      `SELECT l.id, l.title, l.price, l.condition, l.category, l.created_at::text AS raw_created_at,
+      `SELECT l.id, l.title, l.price, l.condition, l.category,
+              l.created_at::text AS raw_created_at, l.updated_at::text AS raw_updated_at,
               u.email AS contributor_email,
               (SELECT s3_key FROM listing_photos WHERE listing_id = l.id ORDER BY sort_order ASC LIMIT 1) AS primary_photo_key,
               lr.level AS risk_level, lr.reasons AS risk_reasons, lr.flags AS risk_flags,
@@ -91,7 +93,7 @@ export class ModerationRepository {
        JOIN users u ON u.id = l.contributor_id
        LEFT JOIN listing_risk lr ON lr.listing_id = l.id
        WHERE ${conditions.join(' AND ')}
-       ORDER BY (${RISK_RANK_SQL}) ASC, l.created_at DESC, l.id ASC
+       ORDER BY (${RISK_RANK_SQL}) ASC, l.updated_at DESC, l.id ASC
        LIMIT $${params.length}`,
       params,
     );
@@ -101,7 +103,7 @@ export class ModerationRepository {
     const nextCursor = hasMore
       ? encodeQueueCursor({
           riskRank: items[items.length - 1].risk_level ? RISK_RANK[items[items.length - 1].risk_level!] : 3,
-          createdAt: items[items.length - 1].raw_created_at,
+          updatedAt: items[items.length - 1].raw_updated_at,
           id: items[items.length - 1].id,
         })
       : null;

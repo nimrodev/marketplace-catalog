@@ -1,7 +1,7 @@
 // Pure functions — no TypeORM, no Nest, testable in isolation, matching
 // the convention in listing-state-machine.ts.
 //
-// createdAt is carried as the exact string handed in, not a JS Date:
+// updatedAt is carried as the exact string handed in, not a JS Date:
 // Postgres timestamptz has microsecond precision but JS Date only has
 // millisecond precision, so round-tripping through Date would silently
 // truncate at a page boundary. Callers are responsible for passing the
@@ -16,7 +16,7 @@
 export class InvalidCursorError extends Error {}
 
 export interface Cursor {
-  createdAt: string;
+  updatedAt: string;
   id: string;
 }
 
@@ -44,7 +44,7 @@ export function decodeCursor(raw: string): Cursor {
     typeof parsed !== 'object' ||
     parsed === null ||
     Array.isArray(parsed) ||
-    typeof (parsed as Record<string, unknown>).createdAt !== 'string' ||
+    typeof (parsed as Record<string, unknown>).updatedAt !== 'string' ||
     typeof (parsed as Record<string, unknown>).id !== 'string' ||
     (parsed as Record<string, unknown>).id === '' ||
     Object.keys(parsed as Record<string, unknown>).length !== 2
@@ -52,10 +52,10 @@ export function decodeCursor(raw: string): Cursor {
     throw new InvalidCursorError('Cursor JSON did not have the expected shape.');
   }
 
-  const { createdAt, id } = parsed as Cursor;
-  if (Number.isNaN(Date.parse(createdAt))) {
-    throw new InvalidCursorError('Cursor createdAt is not a valid timestamp.');
+  const { updatedAt, id } = parsed as Cursor;
+  if (Number.isNaN(Date.parse(updatedAt))) {
+    throw new InvalidCursorError('Cursor updatedAt is not a valid timestamp.');
   }
 
-  return { createdAt, id };
+  return { updatedAt, id };
 }

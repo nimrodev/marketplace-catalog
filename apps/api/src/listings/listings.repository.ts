@@ -260,22 +260,22 @@ export class ListingsRepository {
 
     if (query.cursor) {
       const cursor = decodeCursor(query.cursor);
-      // Row-value comparison against the exact (created_at, id) keyset —
+      // Row-value comparison against the exact (updated_at, id) keyset —
       // matches the MAR-9 index ordering exactly.
-      qb.andWhere('(listing.createdAt, listing.id) < (:cursorCreatedAt, :cursorId)', {
-        cursorCreatedAt: cursor.createdAt,
+      qb.andWhere('(listing.updatedAt, listing.id) < (:cursorUpdatedAt, :cursorId)', {
+        cursorUpdatedAt: cursor.updatedAt,
         cursorId: cursor.id,
       });
     }
 
     // ::text bypasses the pg driver's Date parsing (would truncate to ms
     // before the cursor is even built — see cursor.ts). Quoted raw column
-    // name, not "listing.createdAt": TypeORM's alias translation doesn't
+    // name, not "listing.updatedAt": TypeORM's alias translation doesn't
     // apply inside addSelect() the way it does in where() — verified live,
-    // the untranslated form 500s with "column listing.createdat does not
+    // the untranslated form 500s with "column listing.updatedat does not
     // exist".
-    qb.addSelect('"listing"."created_at"::text', 'raw_created_at')
-      .orderBy('listing.createdAt', 'DESC')
+    qb.addSelect('"listing"."updated_at"::text', 'raw_updated_at')
+      .orderBy('listing.updatedAt', 'DESC')
       .addOrderBy('listing.id', 'DESC')
       .take(limit + 1);
 
@@ -285,7 +285,7 @@ export class ListingsRepository {
 
     const nextCursor =
       hasMore && items.length > 0
-        ? encodeCursor({ createdAt: raw[items.length - 1].raw_created_at, id: items[items.length - 1].id })
+        ? encodeCursor({ updatedAt: raw[items.length - 1].raw_updated_at, id: items[items.length - 1].id })
         : null;
 
     const primaryPhotos = await this.loadPrimaryPhotos(items.map((listing) => listing.id));
