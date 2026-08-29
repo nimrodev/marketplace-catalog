@@ -18,4 +18,7 @@ export const envValidationSchema = Joi.object({
   AWS_ACCESS_KEY_ID: Joi.string().optional(),
   AWS_SECRET_ACCESS_KEY: Joi.string().optional(),
   JWT_SECRET: Joi.string().required(),
+  // Optional by design — every AI feature must degrade cleanly, so the
+  // app boots and stays fully usable with this unset.
+  ANTHROPIC_API_KEY: Joi.string().optional(),
 });

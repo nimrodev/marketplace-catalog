@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AiModule } from './ai/ai.module';
 import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './health/health.module';
@@ -38,6 +39,7 @@ import { buildDataSourceOptions } from './database/data-source-options';
     ModerationModule,
     AuthModule,
     UploadsModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [],

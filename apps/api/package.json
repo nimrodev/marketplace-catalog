@@ -20,6 +20,7 @@
     "seed": "node dist/database/seed.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.122.0",
     "@aws-sdk/client-s3": "^3.687.0",
     "@aws-sdk/client-sqs": "^3.687.0",
     "@aws-sdk/s3-request-presigner": "^3.687.0",
@@ -43,7 +44,8 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "typeorm": "^0.3.20",
-    "typeorm-naming-strategies": "^4.1.0"
+    "typeorm-naming-strategies": "^4.1.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.4.5",
