@@ -10,3 +10,7 @@ export const LISTING_LIMITS = {
 
 export const ALLOWED_PHOTO_CONTENT_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
 export type PhotoContentType = (typeof ALLOWED_PHOTO_CONTENT_TYPES)[number];
+
+export const MODERATION_LIMITS = {
+  rejectionReason: { min: 10, max: 500 },
+} as const;

@@ -12,5 +12,6 @@ import { ListingsService } from './listings.service';
   imports: [TypeOrmModule.forFeature([Listing, ListingPhoto, ListingRisk]), UploadsModule],
   controllers: [ListingsController],
   providers: [ListingsRepository, ListingsService],
+  exports: [ListingsRepository],
 })
 export class ListingsModule {}

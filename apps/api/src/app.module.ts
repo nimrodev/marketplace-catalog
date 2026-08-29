@@ -6,6 +6,7 @@ import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './health/health.module';
 import { ListingsModule } from './listings/listings.module';
+import { ModerationModule } from './moderation/moderation.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { envValidationSchema } from './config/env.validation';
 import { buildDataSourceOptions } from './database/data-source-options';
@@ -34,6 +35,7 @@ import { buildDataSourceOptions } from './database/data-source-options';
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 20 }]),
     HealthModule,
     ListingsModule,
+    ModerationModule,
     AuthModule,
     UploadsModule,
   ],

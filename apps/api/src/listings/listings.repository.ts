@@ -199,6 +199,16 @@ export class ListingsRepository {
     });
   }
 
+  // Separate from update(): a moderation decision never touches content
+  // fields, and approve additionally stamps publishedAt — a shape update()
+  // has no reason to carry.
+  async setModerationStatus(
+    id: string,
+    fields: { status: ListingStatus; rejectionReason: string | null; publishedAt?: Date },
+  ): Promise<void> {
+    await this.repo.update(id, fields);
+  }
+
   // risk is loaded only for moderator/admin viewers — never fetched, so
   // it can never leak into the response for anyone else (MAR-22).
   async findDetail(id: string, viewer: Viewer): Promise<ListingDetail | null> {
