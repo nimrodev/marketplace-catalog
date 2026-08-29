@@ -20,6 +20,7 @@ export const mockListingSummary: ListingSummary = {
   price: 150,
   condition: ListingCondition.GOOD,
   category: ListingCategory.SPORTS_OUTDOORS,
+  status: ListingStatus.PUBLISHED,
 };
 
 export const mockCatalogPage: Page<ListingSummary> = {

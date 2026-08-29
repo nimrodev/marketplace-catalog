@@ -66,3 +66,33 @@
 .moderatorActions { display: flex; gap: var(--space-3); margin-top: var(--space-4); }
 
 .riskList { margin: var(--space-2) 0 0; padding-left: var(--space-4); font-size: var(--text-sm); color: var(--text); }
+
+.modalPrompt {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.reasonInput {
+  width: 100%;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  color: var(--text);
+  resize: vertical;
+}
+
+.error {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-xs);
+  color: var(--risk-high-strong);
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}

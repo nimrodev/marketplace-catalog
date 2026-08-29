@@ -34,6 +34,7 @@ const listingSummary: ListingSummary = {
   price: 150,
   condition: ListingCondition.GOOD,
   category: ListingCategory.SPORTS_OUTDOORS,
+  status: ListingStatus.PUBLISHED,
 };
 
 const listingDetail: ListingDetail = {
@@ -43,7 +44,6 @@ const listingDetail: ListingDetail = {
   minPrice: 100,
   options: [ListingOption.LOCAL_PICKUP, ListingOption.DELIVERY_AVAILABLE],
   photos: [{ url: listingSummary.primaryPhotoUrl!, key: 'listings/user-1/photo-0.jpg', sortOrder: 0 }],
-  status: ListingStatus.PUBLISHED,
   rejectionReason: null,
   contributorId: 'user-1',
   createdAt: new Date().toISOString(),

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ModerationQueueItem, Page, RiskLevel } from '@marketplace/shared';
+import { ListingStatus, ModerationQueueItem, Page, RiskLevel } from '@marketplace/shared';
 import { Listing } from '../listings/listing.entity';
 import { buildPhotoUrl } from '../uploads/photo-url';
 import { decodeQueueCursor, encodeQueueCursor } from './queue-cursor';
@@ -109,6 +109,8 @@ export class ModerationRepository {
       price: Number(row.price),
       condition: row.condition,
       category: row.category,
+      // The query already filters to PENDING — every row here is one.
+      status: ListingStatus.PENDING,
       contributorEmail: row.contributor_email,
       submittedAt: new Date(row.raw_created_at).toISOString(),
       risk: row.risk_level

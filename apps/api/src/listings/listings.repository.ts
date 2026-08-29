@@ -95,6 +95,7 @@ function toSummary(listing: Listing, primaryPhotoUrl: string | null): ListingSum
     price: Number(listing.price),
     condition: listing.condition,
     category: listing.category,
+    status: listing.status,
   };
 }
 

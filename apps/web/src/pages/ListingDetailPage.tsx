@@ -1,20 +1,27 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { USER_ROLE_RANK, UserRole } from '@marketplace/shared';
+import { useQueryClient } from '@tanstack/react-query';
+import { MODERATION_LIMITS, ListingStatus, USER_ROLE_RANK, UserRole } from '@marketplace/shared';
+import { useApproveListingMutation, useRejectListingMutation } from '../api/moderation';
 import { useListingDetailQuery } from '../api/listings';
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { Gallery } from '../components/detail/Gallery';
 import { optionLabel, riskTone, statusTone } from '../components/detail/labels';
 import { conditionLabel, conditionTone } from '../components/catalog/conditionTone';
-import { Badge, Button, EmptyState } from '../components/primitives';
+import { Badge, Button, EmptyState, Modal } from '../components/primitives';
 import styles from './ListingDetailPage.module.css';
 
-// Approve/reject stay inert placeholders: those moderation endpoints
-// don't exist yet. Edit is real — MAR-40 gave it a form and PATCH exists.
 export default function ListingDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const { data: listing, isLoading, error } = useListingDetailQuery(id);
+  const approve = useApproveListingMutation();
+  const reject = useRejectListingMutation();
+  const [rejecting, setRejecting] = useState(false);
+  const [reason, setReason] = useState('');
+  const [reasonError, setReasonError] = useState<string | null>(null);
 
   if (isLoading) {
     return <EmptyState title="Loading…" />;
@@ -34,6 +41,37 @@ export default function ListingDetailPage() {
   // is the interim moderator-view signal until real roles exist (MAR-12).
   const isModeratorView = listing.risk !== null;
   const canEdit = !!user && (user.id === listing.contributorId || USER_ROLE_RANK[user.role] >= USER_ROLE_RANK[UserRole.MODERATOR]);
+  const canDecide = isModeratorView && listing.status === ListingStatus.PENDING;
+
+  function refetchListing() {
+    queryClient.invalidateQueries({ queryKey: ['listing', listing!.id] });
+  }
+
+  function handleApprove() {
+    approve.mutate(listing!.id, { onSuccess: refetchListing });
+  }
+
+  function openReject() {
+    setRejecting(true);
+    setReason('');
+    setReasonError(null);
+  }
+
+  function submitReject() {
+    if (reason.trim().length < MODERATION_LIMITS.rejectionReason.min) {
+      setReasonError(`Reason must be at least ${MODERATION_LIMITS.rejectionReason.min} characters.`);
+      return;
+    }
+    reject.mutate(
+      { listingId: listing!.id, reason: reason.trim() },
+      {
+        onSuccess: () => {
+          refetchListing();
+          setRejecting(false);
+        },
+      },
+    );
+  }
 
   return (
     <div className={styles.layout}>
@@ -78,19 +116,21 @@ export default function ListingDetailPage() {
             </div>
             {listing.risk.reasons.length > 0 && (
               <ul className={styles.riskList}>
-                {listing.risk.reasons.map((reason) => (
-                  <li key={reason}>{reason}</li>
+                {listing.risk.reasons.map((reasonText) => (
+                  <li key={reasonText}>{reasonText}</li>
                 ))}
               </ul>
             )}
-            <div className={styles.moderatorActions}>
-              <Button variant="primary" disabled>
-                Approve
-              </Button>
-              <Button variant="danger" disabled>
-                Reject
-              </Button>
-            </div>
+            {canDecide && (
+              <div className={styles.moderatorActions}>
+                <Button variant="primary" onClick={handleApprove} disabled={approve.isPending}>
+                  Approve
+                </Button>
+                <Button variant="danger" onClick={openReject} disabled={reject.isPending}>
+                  Reject
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
@@ -100,6 +140,31 @@ export default function ListingDetailPage() {
           </Button>
         )}
       </div>
+
+      <Modal open={rejecting} onClose={() => setRejecting(false)} title="Reject listing">
+        <p className={styles.modalPrompt}>Rejecting &ldquo;{listing.title}&rdquo;. This reason is shown to the contributor.</p>
+        <textarea
+          className={styles.reasonInput}
+          rows={4}
+          value={reason}
+          onChange={(e) => {
+            setReason(e.target.value);
+            setReasonError(null);
+          }}
+          autoFocus
+        />
+        {reasonError && (
+          <p role="alert" className={styles.error}>
+            {reasonError}
+          </p>
+        )}
+        <div className={styles.modalActions}>
+          <Button onClick={() => setRejecting(false)}>Cancel</Button>
+          <Button variant="danger" onClick={submitReject} disabled={reject.isPending}>
+            {reject.isPending ? 'Rejecting…' : 'Confirm reject'}
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }

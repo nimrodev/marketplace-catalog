@@ -10,6 +10,10 @@ export interface ListingPhoto {
 }
 
 // The catalog card — deliberately narrow, one row per listing in /listings.
+// status is here (not just on ListingDetail) so a moderator/admin browsing
+// the catalog — which, unlike everyone else, includes non-published rows —
+// can tell them apart; harmless for every other viewer, who never sees a
+// non-published row in the first place.
 export interface ListingSummary {
   id: string;
   title: string;
@@ -17,6 +21,7 @@ export interface ListingSummary {
   price: number;
   condition: ListingCondition;
   category: ListingCategory;
+  status: ListingStatus;
 }
 
 export interface ListingDetail extends Omit<ListingSummary, 'primaryPhotoUrl'> {
@@ -25,7 +30,6 @@ export interface ListingDetail extends Omit<ListingSummary, 'primaryPhotoUrl'> {
   minPrice: number | null;
   options: ListingOption[];
   photos: ListingPhoto[];
-  status: ListingStatus;
   rejectionReason: string | null;
   contributorId: string;
   createdAt: string;
