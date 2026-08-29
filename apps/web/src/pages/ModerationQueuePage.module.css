@@ -119,3 +119,24 @@
   gap: var(--space-3);
   margin-top: var(--space-4);
 }
+
+/* The 96px/1fr/auto grid has no mobile handling — on a phone the info
+   column gets squeezed to ~140px, which wraps long flag-badge text onto
+   several lines inside a near-square box; at border-radius: 999px that
+   renders as a circle, not a pill. Stacking removes the squeeze instead
+   of trying to shrink the badge text to fit it. */
+@media (max-width: 640px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+  .photo {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+  }
+  .actions {
+    flex-direction: row;
+  }
+  .actions > * {
+    flex: 1;
+  }
+}
