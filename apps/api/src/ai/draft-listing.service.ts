@@ -26,8 +26,8 @@ function buildJsonSchema() {
   return {
     type: 'object' as const,
     properties: {
-      title: { type: 'string' as const, description: 'A short, marketplace-style listing title' },
-      description: { type: 'string' as const, description: 'A 1-3 sentence description of the item for buyers' },
+      title: { type: 'string' as const, description: "The product's name — brand, model, and variant, not a description of the photo" },
+      description: { type: 'string' as const, description: 'A short intro plus a spec list relevant to the product type, for buyers' },
       category: { type: 'string' as const, enum: Object.values(ListingCategory) },
       condition: { type: 'string' as const, enum: Object.values(ListingCondition) },
       suggestedPriceMin: { type: 'number' as const, description: 'Lower bound of a fair resale price, in whole currency units' },
@@ -40,7 +40,9 @@ function buildJsonSchema() {
 function buildSystemPrompt(): string {
   return [
     'You draft secondhand marketplace listings from item photos for a contributor to review and edit.',
-    'Describe only what is visibly present in the photos — never invent brand, model, or condition details you cannot see.',
+    'title: the product\'s actual name — brand, model, and distinguishing variant (e.g. "Apple MacBook Air 13\\" (Starlight)", "Nike Air Max 90"). Never describe the photo itself (never write things like "Keyboard/Trackpad View" or "Front view").',
+    'description: 1-2 sentences, then a short spec list of whatever applies to this kind of product (electronics: Storage, Memory, Processor, Screen size; furniture: Material, Dimensions; clothing: Size, Material — use your judgement for the category). State a spec you can confidently determine from visible branding, model markings, or well-known specs for that exact model. If a spec cannot be determined from the photos, write "Not specified — please confirm" for that line rather than omitting it or guessing a number.',
+    'Condition is different: only describe wear, damage, or cosmetic condition you can actually see in the photos — never assume "like new" or invent flaws that aren\'t visible.',
     `category must be exactly one of: ${Object.values(ListingCategory).join(', ')}.`,
     `condition must be exactly one of: ${Object.values(ListingCondition).join(', ')}.`,
     'suggestedPriceMin and suggestedPriceMax are a fair resale price range, not a fixed price — they are shown to the contributor as a suggestion only.',
