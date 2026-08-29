@@ -52,11 +52,9 @@ export default function ListingDetailPage() {
     );
   }
 
-  // risk is only ever on the wire for a moderator (MAR-22) — presence
-  // is the interim moderator-view signal until real roles exist (MAR-12).
-  const isModeratorView = listing.risk !== null;
+  const isModeratorView = !!user && USER_ROLE_RANK[user.role] >= USER_ROLE_RANK[UserRole.MODERATOR];
   const isOwner = !!user && user.id === listing.contributorId;
-  const canEdit = !!user && (isOwner || USER_ROLE_RANK[user.role] >= USER_ROLE_RANK[UserRole.MODERATOR]);
+  const canEdit = !!user && (isOwner || isModeratorView);
   const canDecide = isModeratorView && listing.status === ListingStatus.PENDING;
 
   function refetchListing() {
