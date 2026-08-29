@@ -7,7 +7,7 @@ import { useListingDetailQuery } from '../api/listings';
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { Gallery } from '../components/detail/Gallery';
-import { optionLabel, riskTone, statusTone } from '../components/detail/labels';
+import { categoryLabel, optionLabel, riskTone, statusTone } from '../components/detail/labels';
 import { conditionLabel, conditionTone } from '../components/catalog/conditionTone';
 import { Badge, Button, EmptyState, Modal } from '../components/primitives';
 import styles from './ListingDetailPage.module.css';
@@ -101,7 +101,7 @@ export default function ListingDetailPage() {
           </div>
 
           <h1 className={styles.title}>{listing.title}</h1>
-          <div className={styles.catRow}>{listing.category}</div>
+          <div className={styles.catRow}>{categoryLabel(listing.category)}</div>
 
           <div className={styles.priceRow}>
             <span className={styles.price}>${listing.price.toLocaleString()}</span>

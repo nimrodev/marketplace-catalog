@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ListingStatus, type ListingSummary } from '@marketplace/shared';
-import { statusTone } from '../detail/labels';
+import { categoryLabel, statusTone } from '../detail/labels';
 import { Badge, Card } from '../primitives';
 import { conditionLabel, conditionTone } from './conditionTone';
 import styles from './ListingCard.module.css';
@@ -22,7 +22,7 @@ export function ListingCard({ listing, showStatus = false }: ListingCardProps) {
         {listing.primaryPhotoUrl && <img src={listing.primaryPhotoUrl} alt={listing.title} loading="lazy" />}
       </div>
       <div className={styles.body}>
-        <div className={styles.catRow}>{listing.category}</div>
+        <div className={styles.catRow}>{categoryLabel(listing.category)}</div>
         <div className={styles.title}>{listing.title}</div>
         <div className={styles.badgeRow}>
           {(showStatus || listing.status !== ListingStatus.PUBLISHED) && (
