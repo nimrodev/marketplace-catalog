@@ -33,16 +33,17 @@ const NOT_DELETED = 'listing.deletedAt IS NULL';
 const IS_PUBLISHED = 'listing.status = :published';
 
 // Every accessor must route through here (MAR-15). deleted_at excludes
-// everyone but moderator/admin, owner included — delete is moderator-only.
+// everyone, moderator/admin included — a soft-deleted listing 404s for
+// every role, with no "undelete via the detail endpoint" back door.
 function scopeToVisible(qb: SelectQueryBuilder<Listing>, viewer: Viewer): SelectQueryBuilder<Listing> {
+  qb = qb.andWhere(NOT_DELETED);
+
   if (isModeratorOrAdmin(viewer)) {
     return qb;
   }
 
   if (viewer.role === UserRole.CONTRIBUTOR) {
-    // NOT_DELETED as its own andWhere() call stays outside the OR below
-    // (each where()/andWhere() call is auto-parenthesized by TypeORM).
-    return qb.andWhere(NOT_DELETED).andWhere(
+    return qb.andWhere(
       new Brackets((sub) => {
         sub
           .where(IS_PUBLISHED, { published: ListingStatus.PUBLISHED })
@@ -51,7 +52,7 @@ function scopeToVisible(qb: SelectQueryBuilder<Listing>, viewer: Viewer): Select
     );
   }
 
-  return qb.andWhere(NOT_DELETED).andWhere(IS_PUBLISHED, { published: ListingStatus.PUBLISHED });
+  return qb.andWhere(IS_PUBLISHED, { published: ListingStatus.PUBLISHED });
 }
 
 export const CATALOG_LIMIT = { default: 24, max: 50 } as const;
@@ -207,6 +208,12 @@ export class ListingsRepository {
     fields: { status: ListingStatus; rejectionReason: string | null; publishedAt?: Date },
   ): Promise<void> {
     await this.repo.update(id, fields);
+  }
+
+  // S3 photos are deliberately left in place — a lifecycle rule or reaper
+  // job is the production answer for orphaned objects, and isn't built.
+  async softDelete(id: string): Promise<void> {
+    await this.repo.update(id, { deletedAt: new Date() });
   }
 
   // risk is loaded only for moderator/admin viewers — never fetched, so

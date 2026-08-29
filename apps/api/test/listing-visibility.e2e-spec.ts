@@ -169,9 +169,11 @@ describe('Listing visibility scoping (e2e)', () => {
     expect(found?.id).toBe(id);
   });
 
-  it('a moderator can fetch a soft-deleted listing', async () => {
+  // Superseded by MAR-27: a soft-deleted listing 404s for every role,
+  // moderators included — no "undelete via the detail endpoint" back door.
+  it('a moderator cannot fetch a soft-deleted listing', async () => {
     const id = await insertListing({ status: 'PUBLISHED', deleted_at: new Date() });
     const found = await repo.findVisibleById(id, moderator);
-    expect(found?.id).toBe(id);
+    expect(found).toBeNull();
   });
 });

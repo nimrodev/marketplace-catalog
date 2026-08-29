@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   NotFoundException,
@@ -86,5 +87,12 @@ export class ListingsController {
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<ListingDetail> {
     return this.listingsService.update(user, id, dto);
+  }
+
+  @Roles(UserRole.MODERATOR)
+  @Delete(':id')
+  @HttpCode(204)
+  async remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthenticatedUser): Promise<void> {
+    await this.listingsService.remove(user, id);
   }
 }
