@@ -72,8 +72,13 @@ export function FilterBar() {
 
   return (
     <div className={styles.wrap}>
-      <Button variant="ghost" className={styles.toggle} onClick={() => setExpanded((e) => !e)}>
-        Filters{chips.length > 0 ? ` (${chips.length})` : ''}
+      {/* The default (bordered) variant, not ghost — a ghost button here
+          reads as plain text with no tap affordance at all. */}
+      <Button className={styles.toggle} aria-expanded={expanded} onClick={() => setExpanded((e) => !e)}>
+        <span>Filters{chips.length > 0 ? ` (${chips.length})` : ''}</span>
+        <span className={expanded ? styles.chevronOpen : styles.chevron} aria-hidden="true">
+          ▾
+        </span>
       </Button>
 
       <div className={expanded ? `${styles.panel} ${styles.open}` : styles.panel}>

@@ -10,6 +10,16 @@
   gap: var(--space-5);
 }
 
+/* minmax(230px, 1fr) auto-fills to a single column below ~460px, so a
+   phone only ever showed one large card per screen — two smaller cards
+   surface more of the catalog per scroll. */
+@media (max-width: 560px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+  }
+}
+
 .skeletonCard {
   border-radius: var(--radius-lg);
   overflow: hidden;

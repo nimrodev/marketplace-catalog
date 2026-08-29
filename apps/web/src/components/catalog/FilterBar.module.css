@@ -84,8 +84,19 @@
 
 @media (max-width: 700px) {
   .toggle {
-    display: inline-flex;
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
     margin-bottom: var(--space-3);
+  }
+
+  .chevron,
+  .chevronOpen {
+    transition: transform 120ms ease;
+  }
+
+  .chevronOpen {
+    transform: rotate(180deg);
   }
 
   .panel {
