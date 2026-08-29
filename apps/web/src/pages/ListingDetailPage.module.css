@@ -13,6 +13,16 @@
 
 .badgeRow { display: flex; gap: 6px; margin-bottom: var(--space-3); }
 
+.pendingNotice {
+  padding: var(--space-3) var(--space-4);
+  background: var(--status-pending-soft);
+  border: 1px solid var(--status-pending);
+  border-radius: var(--radius-sm);
+  color: var(--status-pending-strong);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-4);
+}
+
 .title { font-size: var(--text-2xl); margin-bottom: var(--space-2); }
 
 .catRow {

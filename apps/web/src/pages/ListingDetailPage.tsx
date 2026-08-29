@@ -55,7 +55,8 @@ export default function ListingDetailPage() {
   // risk is only ever on the wire for a moderator (MAR-22) — presence
   // is the interim moderator-view signal until real roles exist (MAR-12).
   const isModeratorView = listing.risk !== null;
-  const canEdit = !!user && (user.id === listing.contributorId || USER_ROLE_RANK[user.role] >= USER_ROLE_RANK[UserRole.MODERATOR]);
+  const isOwner = !!user && user.id === listing.contributorId;
+  const canEdit = !!user && (isOwner || USER_ROLE_RANK[user.role] >= USER_ROLE_RANK[UserRole.MODERATOR]);
   const canDecide = isModeratorView && listing.status === ListingStatus.PENDING;
 
   function refetchListing() {
@@ -96,9 +97,13 @@ export default function ListingDetailPage() {
 
         <div>
           <div className={styles.badgeRow}>
-            {isModeratorView && <Badge tone={statusTone(listing.status)}>{listing.status}</Badge>}
+            {(isModeratorView || isOwner) && <Badge tone={statusTone(listing.status)}>{listing.status}</Badge>}
             <Badge tone={conditionTone(listing.condition)}>{conditionLabel(listing.condition)}</Badge>
           </div>
+
+          {isOwner && listing.status === ListingStatus.PENDING && (
+            <p className={styles.pendingNotice}>Your listing is pending review. It'll appear in the catalog once a moderator approves it.</p>
+          )}
 
           <h1 className={styles.title}>{listing.title}</h1>
           <div className={styles.catRow}>{categoryLabel(listing.category)}</div>
