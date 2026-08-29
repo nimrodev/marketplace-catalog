@@ -51,7 +51,7 @@ export class ListingsController {
       throw new UnauthorizedException();
     }
     try {
-      return await this.listings.findCatalogPage(query, toViewer(user), query.mine ? user!.id : undefined);
+      return await this.listings.findCatalogPage(query, query.mine ? user!.id : undefined);
     } catch (err) {
       if (err instanceof InvalidCursorError) {
         throw new BadRequestException('Invalid cursor');

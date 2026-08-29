@@ -246,16 +246,18 @@ export class ListingsRepository {
     return { level: row.level, reasons: row.reasons, flags: row.flags, model: row.model, evaluatedAt: row.evaluatedAt.toISOString() };
   }
 
-  // mineUserId bypasses scopeToVisible entirely rather than composing with
-  // it — "my own listings" means every status, which is the one case
-  // where a PENDING/REJECTED row is visible outside moderation.
-  async findCatalogPage(query: CatalogQuery, viewer: Viewer, mineUserId?: string): Promise<Page<ListingSummary>> {
+  // Deliberately not scopeToVisible: that helper lets a contributor see
+  // their own PENDING/REJECTED listing on the single-item detail lookup,
+  // which is correct there but wrong here — the catalog is PUBLISHED-only
+  // for every viewer, moderator and admin included. mineUserId ("My
+  // Listings") is the one path to a non-published row here.
+  async findCatalogPage(query: CatalogQuery, mineUserId?: string): Promise<Page<ListingSummary>> {
     const limit = clampLimit(query.limit);
 
-    let qb = this.repo.createQueryBuilder('listing');
+    let qb = this.repo.createQueryBuilder('listing').andWhere(NOT_DELETED);
     qb = mineUserId
-      ? qb.andWhere(NOT_DELETED).andWhere('listing.contributorId = :mineUserId', { mineUserId })
-      : scopeToVisible(qb, viewer);
+      ? qb.andWhere('listing.contributorId = :mineUserId', { mineUserId })
+      : qb.andWhere(IS_PUBLISHED, { published: ListingStatus.PUBLISHED });
     qb = applyFilters(qb, query);
 
     if (query.cursor) {

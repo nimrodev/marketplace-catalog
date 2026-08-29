@@ -4,14 +4,13 @@ import { buildDataSourceOptions } from '../src/database/data-source-options';
 import { Listing } from '../src/listings/listing.entity';
 import { ListingPhoto } from '../src/listings/listing-photo.entity';
 import { ListingRisk } from '../src/listings/listing-risk.entity';
-import { CATALOG_LIMIT, ListingsRepository, Viewer } from '../src/listings/listings.repository';
+import { CATALOG_LIMIT, ListingsRepository } from '../src/listings/listings.repository';
 import { fakeConfigService } from './support/fake-config-service';
 
 describe('Catalog query (e2e)', () => {
   let dataSource: DataSource;
   let repo: ListingsRepository;
   let contributorId: string;
-  const anonymous: Viewer = { role: null };
 
   async function insertListing(overrides: Record<string, unknown>): Promise<string> {
     const row = {
@@ -137,7 +136,7 @@ describe('Catalog query (e2e)', () => {
       }
       // ids[9] is newest (updated_at = base+9000ms) -> first page.
 
-      const page1 = await repo.findCatalogPage({ limit: 4 }, anonymous);
+      const page1 = await repo.findCatalogPage({ limit: 4 });
       const page1Ids = page1.items.filter((l) => ids.includes(l.id)).map((l) => l.id);
       expect(page1Ids).toEqual([ids[9], ids[8], ids[7], ids[6]]);
       expect(page1.nextCursor).not.toBeNull();
@@ -146,7 +145,7 @@ describe('Catalog query (e2e)', () => {
       // it lands at the head of the ordering, newer than everything.
       const newHeadId = await insertListing({ title: 'Published mid-scroll', updated_at: new Date(base + 20_000) });
 
-      const page2 = await repo.findCatalogPage({ limit: 4, cursor: page1.nextCursor! }, anonymous);
+      const page2 = await repo.findCatalogPage({ limit: 4, cursor: page1.nextCursor! });
       const page2Ids = page2.items.filter((l) => ids.includes(l.id)).map((l) => l.id);
 
       expect(page2Ids).toEqual([ids[5], ids[4], ids[3], ids[2]]);
@@ -157,17 +156,17 @@ describe('Catalog query (e2e)', () => {
 
   describe('limit clamping', () => {
     it('defaults to CATALOG_LIMIT.default when limit is omitted', async () => {
-      const page = await repo.findCatalogPage({}, anonymous);
+      const page = await repo.findCatalogPage({});
       expect(page.items.length).toBeLessThanOrEqual(CATALOG_LIMIT.default);
     });
 
     it('clamps a limit above the cap instead of honouring it', async () => {
-      const page = await repo.findCatalogPage({ limit: 10_000 }, anonymous);
+      const page = await repo.findCatalogPage({ limit: 10_000 });
       expect(page.items.length).toBeLessThanOrEqual(CATALOG_LIMIT.max);
     });
 
     it('clamps a non-positive limit to the default rather than erroring', async () => {
-      const page = await repo.findCatalogPage({ limit: -5 }, anonymous);
+      const page = await repo.findCatalogPage({ limit: -5 });
       expect(page.items.length).toBeLessThanOrEqual(CATALOG_LIMIT.default);
     });
   });
@@ -206,7 +205,7 @@ describe('Catalog query (e2e)', () => {
     });
 
     async function idsFor(query: Parameters<ListingsRepository['findCatalogPage']>[0]): Promise<string[]> {
-      const page = await repo.findCatalogPage({ ...query, limit: 50 }, anonymous);
+      const page = await repo.findCatalogPage({ ...query, limit: 50 });
       return page.items.map((l) => l.id);
     }
 
