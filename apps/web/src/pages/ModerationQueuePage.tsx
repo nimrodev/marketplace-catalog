@@ -9,7 +9,14 @@ import styles from './ModerationQueuePage.module.css';
 
 function RiskInfo({ risk }: { risk: ModerationQueueItem['risk'] }) {
   if (!risk) {
-    return <Badge tone="outline">Not yet assessed</Badge>;
+    return (
+      <div className={styles.riskInfo}>
+        <span title="The automated pre-screen (rule checks + AI) hasn't finished reviewing this listing yet.">
+          <Badge tone="outline">Not yet assessed</Badge>
+        </span>
+        <span className={styles.riskReason}>Automated pre-screening is still in progress — check back shortly, or review manually.</span>
+      </div>
+    );
   }
   return (
     <div className={styles.riskInfo}>
