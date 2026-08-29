@@ -12,3 +12,5 @@ export { Skeleton } from './Skeleton/Skeleton';
 export type { SkeletonProps } from './Skeleton/Skeleton';
 export { EmptyState } from './EmptyState/EmptyState';
 export type { EmptyStateProps } from './EmptyState/EmptyState';
+export { Modal } from './Modal/Modal';
+export type { ModalProps } from './Modal/Modal';
