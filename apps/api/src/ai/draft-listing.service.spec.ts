@@ -2,7 +2,7 @@ import { ConfigService } from '@nestjs/config';
 import { BadGatewayException, BadRequestException, ServiceUnavailableException } from '@nestjs/common';
 import { S3Client } from '@aws-sdk/client-s3';
 import { ListingCategory, ListingCondition } from '@marketplace/shared';
-import { AiSchemaValidationError, AiUnavailableError } from './ai-errors';
+import { AiProviderError, AiSchemaValidationError, AiTimeoutError, AiUnavailableError } from './ai-errors';
 import { AnthropicClientService } from './anthropic-client.service';
 import { DraftListingService } from './draft-listing.service';
 import { PhotoOwnershipValidator } from '../uploads/photo-ownership.validator';
@@ -87,9 +87,14 @@ describe('DraftListingService', () => {
     expect(sendSpy).toHaveBeenCalledTimes(3);
   });
 
-  it('degrades AiUnavailableError to a clean 503 instead of crashing', async () => {
+  it.each([
+    ['missing API key', new AiUnavailableError()],
+    ['a timeout', new AiTimeoutError()],
+    ['a 429 rate-limit response', new AiProviderError(429, 'rate limited')],
+    ['a 500 provider error', new AiProviderError(500, 'internal error')],
+  ])('degrades %s to a clean 503 instead of crashing', async (_label, error) => {
     const ownership = buildOwnership();
-    const anthropic = buildAnthropic({ generateStructured: jest.fn().mockRejectedValue(new AiUnavailableError()) });
+    const anthropic = buildAnthropic({ generateStructured: jest.fn().mockRejectedValue(error) });
     const service = new DraftListingService(buildConfig(), ownership, anthropic);
 
     await expect(service.draft('user-1', ['listings/user-1/photo.jpg'])).rejects.toBeInstanceOf(ServiceUnavailableException);

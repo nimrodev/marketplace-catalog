@@ -1,4 +1,5 @@
 import { ListingCategory, ListingStatus, PreScreenMessage, RiskLevel } from '@marketplace/shared';
+import { AiProviderError, AiSchemaValidationError, AiTimeoutError, AiUnavailableError } from '../ai/ai-errors';
 import { PhotoFetcherService } from '../ai/photo-fetcher.service';
 import { PrescreenAiService } from '../ai/prescreen-ai.service';
 import { ListingLookupRepository } from '../risk/listing-lookup.repository';
@@ -59,10 +60,17 @@ describe('PrescreenMessageProcessor', () => {
     );
   });
 
-  it('persists the deterministic-only result when the AI call fails', async () => {
+  it.each([
+    ['missing API key', new AiUnavailableError()],
+    ['a schema-violating response', new AiSchemaValidationError('bad shape')],
+    ['a timeout', new AiTimeoutError()],
+    ['a 429 rate-limit response', new AiProviderError(429, 'rate limited')],
+    ['a 500 provider error', new AiProviderError(500, 'internal error')],
+    ['an unrecognized error', new Error('unexpected')],
+  ])('persists the deterministic-only result rather than nothing when the AI call fails with %s', async (_label, error) => {
     lookup.findForPrescreen.mockResolvedValue({ listing, photos: [photo] });
     photoFetcher.fetch.mockResolvedValue([]);
-    ai.screen.mockRejectedValue(new Error('AI unavailable'));
+    ai.screen.mockRejectedValue(error);
 
     const outcome = await processor.process(message);
 
