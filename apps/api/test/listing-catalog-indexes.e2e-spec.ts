@@ -102,7 +102,7 @@ describe('Catalog indexes (e2e)', () => {
 
   it('the public catalog keyset query uses the partial catalog index', async () => {
     const plan = await explain(
-      `SELECT * FROM listings WHERE status = 'PUBLISHED' AND deleted_at IS NULL ORDER BY created_at DESC, id DESC LIMIT 20`,
+      `SELECT * FROM listings WHERE status = 'PUBLISHED' AND deleted_at IS NULL ORDER BY updated_at DESC, id DESC LIMIT 20`,
     );
     expect(plan).toContain('IDX_listings_catalog_keyset');
     expect(plan).not.toMatch(/Seq Scan/);
@@ -110,7 +110,7 @@ describe('Catalog indexes (e2e)', () => {
 
   it('category-filtered browse uses the status+category index', async () => {
     const plan = await explain(
-      `SELECT * FROM listings WHERE status = 'PUBLISHED' AND category = 'ELECTRONICS' ORDER BY created_at DESC, id DESC LIMIT 20`,
+      `SELECT * FROM listings WHERE status = 'PUBLISHED' AND category = 'ELECTRONICS' ORDER BY updated_at DESC, id DESC LIMIT 20`,
     );
     expect(plan).toContain('IDX_listings_status_category_keyset');
     expect(plan).not.toMatch(/Seq Scan/);
@@ -118,10 +118,10 @@ describe('Catalog indexes (e2e)', () => {
 
   it('"my listings" uses the contributor index', async () => {
     const plan = await explain(
-      `SELECT id FROM listings WHERE contributor_id = $1 ORDER BY created_at DESC LIMIT 20`,
+      `SELECT id FROM listings WHERE contributor_id = $1 ORDER BY updated_at DESC LIMIT 20`,
       [contributorId],
     );
-    expect(plan).toContain('IDX_listings_contributor_created');
+    expect(plan).toContain('IDX_listings_contributor_updated');
     expect(plan).not.toMatch(/Seq Scan/);
   });
 
