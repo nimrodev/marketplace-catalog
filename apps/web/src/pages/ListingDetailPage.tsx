@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { MODERATION_LIMITS, ListingStatus, USER_ROLE_RANK, UserRole } from '@marketplace/shared';
 import { useApproveListingMutation, useRejectListingMutation } from '../api/moderation';
@@ -14,6 +14,7 @@ import styles from './ListingDetailPage.module.css';
 
 export default function ListingDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { data: listing, isLoading, error } = useListingDetailQuery(id);
@@ -23,17 +24,31 @@ export default function ListingDetailPage() {
   const [reason, setReason] = useState('');
   const [reasonError, setReasonError] = useState<string | null>(null);
 
+  const backButton = (
+    <Button variant="ghost" onClick={() => navigate(-1)} className={styles.backButton}>
+      ← Back
+    </Button>
+  );
+
   if (isLoading) {
-    return <EmptyState title="Loading…" />;
+    return (
+      <div>
+        {backButton}
+        <EmptyState title="Loading…" />
+      </div>
+    );
   }
 
   if (error || !listing) {
     const notFound = error instanceof ApiError && (error.status === 404 || error.status === 400);
     return (
-      <EmptyState
-        title={notFound ? 'Listing not found' : 'Something went wrong'}
-        description={notFound ? "This listing doesn't exist, or isn't visible to you." : 'Please try again.'}
-      />
+      <div>
+        {backButton}
+        <EmptyState
+          title={notFound ? 'Listing not found' : 'Something went wrong'}
+          description={notFound ? "This listing doesn't exist, or isn't visible to you." : 'Please try again.'}
+        />
+      </div>
     );
   }
 
@@ -74,71 +89,74 @@ export default function ListingDetailPage() {
   }
 
   return (
-    <div className={styles.layout}>
-      <Gallery photos={listing.photos} alt={listing.title} />
+    <div>
+      {backButton}
+      <div className={styles.layout}>
+        <Gallery photos={listing.photos} alt={listing.title} />
 
-      <div>
-        <div className={styles.badgeRow}>
-          {isModeratorView && <Badge tone={statusTone(listing.status)}>{listing.status}</Badge>}
-          <Badge tone={conditionTone(listing.condition)}>{conditionLabel(listing.condition)}</Badge>
-        </div>
-
-        <h1 className={styles.title}>{listing.title}</h1>
-        <div className={styles.catRow}>{listing.category}</div>
-
-        <div className={styles.priceRow}>
-          <span className={styles.price}>${listing.price.toLocaleString()}</span>
-          {listing.isNegotiable && <span className={styles.negotiable}>Negotiable</span>}
-        </div>
-        {listing.isNegotiable && listing.minPrice !== null && (
-          <div className={styles.minPrice}>Minimum accepted: ${listing.minPrice.toLocaleString()}</div>
-        )}
-
-        <p className={styles.description}>{listing.description}</p>
-
-        {listing.options.length > 0 && (
-          <>
-            <div className={styles.sectionLabel}>Options</div>
-            <div className={styles.optionRow}>
-              {listing.options.map((option) => (
-                <Badge key={option} tone="neutral">
-                  {optionLabel(option)}
-                </Badge>
-              ))}
-            </div>
-          </>
-        )}
-
-        {isModeratorView && listing.risk && (
-          <div className={styles.moderatorSection}>
-            <div className={styles.sectionLabel}>
-              Risk assessment — <Badge tone={riskTone(listing.risk.level)}>{listing.risk.level}</Badge>
-            </div>
-            {listing.risk.reasons.length > 0 && (
-              <ul className={styles.riskList}>
-                {listing.risk.reasons.map((reasonText) => (
-                  <li key={reasonText}>{reasonText}</li>
-                ))}
-              </ul>
-            )}
-            {canDecide && (
-              <div className={styles.moderatorActions}>
-                <Button variant="primary" onClick={handleApprove} disabled={approve.isPending}>
-                  Approve
-                </Button>
-                <Button variant="danger" onClick={openReject} disabled={reject.isPending}>
-                  Reject
-                </Button>
-              </div>
-            )}
+        <div>
+          <div className={styles.badgeRow}>
+            {isModeratorView && <Badge tone={statusTone(listing.status)}>{listing.status}</Badge>}
+            <Badge tone={conditionTone(listing.condition)}>{conditionLabel(listing.condition)}</Badge>
           </div>
-        )}
 
-        {canEdit && (
-          <Button as={Link} to={`/listings/${listing.id}/edit`}>
-            Edit
-          </Button>
-        )}
+          <h1 className={styles.title}>{listing.title}</h1>
+          <div className={styles.catRow}>{listing.category}</div>
+
+          <div className={styles.priceRow}>
+            <span className={styles.price}>${listing.price.toLocaleString()}</span>
+            {listing.isNegotiable && <span className={styles.negotiable}>Negotiable</span>}
+          </div>
+          {listing.isNegotiable && listing.minPrice !== null && (
+            <div className={styles.minPrice}>Minimum accepted: ${listing.minPrice.toLocaleString()}</div>
+          )}
+
+          <p className={styles.description}>{listing.description}</p>
+
+          {listing.options.length > 0 && (
+            <>
+              <div className={styles.sectionLabel}>Options</div>
+              <div className={styles.optionRow}>
+                {listing.options.map((option) => (
+                  <Badge key={option} tone="neutral">
+                    {optionLabel(option)}
+                  </Badge>
+                ))}
+              </div>
+            </>
+          )}
+
+          {isModeratorView && listing.risk && (
+            <div className={styles.moderatorSection}>
+              <div className={styles.sectionLabel}>
+                Risk assessment — <Badge tone={riskTone(listing.risk.level)}>{listing.risk.level}</Badge>
+              </div>
+              {listing.risk.reasons.length > 0 && (
+                <ul className={styles.riskList}>
+                  {listing.risk.reasons.map((reasonText) => (
+                    <li key={reasonText}>{reasonText}</li>
+                  ))}
+                </ul>
+              )}
+              {canDecide && (
+                <div className={styles.moderatorActions}>
+                  <Button variant="primary" onClick={handleApprove} disabled={approve.isPending}>
+                    Approve
+                  </Button>
+                  <Button variant="danger" onClick={openReject} disabled={reject.isPending}>
+                    Reject
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {canEdit && (
+            <Button as={Link} to={`/listings/${listing.id}/edit`}>
+              Edit
+            </Button>
+          )}
+        </div>
       </div>
 
       <Modal open={rejecting} onClose={() => setRejecting(false)} title="Reject listing">

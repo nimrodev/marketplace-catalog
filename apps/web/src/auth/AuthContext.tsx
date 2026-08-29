@@ -15,6 +15,18 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+// Everything viewer-scoped that isn't "who am I" — a moderator/admin's
+// unfiltered catalog/listing/queue views included. Deliberately NOT
+// queryClient.clear(): that also tears down this same provider's own
+// ME_QUERY_KEY observer (mounted below, in the component calling this),
+// orphaning it from the cache until a full reload — setQueryData right
+// after would populate a cache entry the stale observer never resubscribes to.
+function forgetViewerScopedData(queryClient: ReturnType<typeof useQueryClient>): void {
+  queryClient.removeQueries({ queryKey: ['catalog'] });
+  queryClient.removeQueries({ queryKey: ['listing'] });
+  queryClient.removeQueries({ queryKey: ['moderation'] });
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
 
@@ -26,16 +38,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     retry: false,
   });
 
-  useEffect(() => onUnauthorized(() => queryClient.setQueryData(ME_QUERY_KEY, null)), [queryClient]);
+  useEffect(
+    () =>
+      onUnauthorized(() => {
+        forgetViewerScopedData(queryClient);
+        queryClient.setQueryData(ME_QUERY_KEY, null);
+      }),
+    [queryClient],
+  );
 
   async function login(credentials: LoginRequest): Promise<AuthUser> {
     const loggedInUser = await loginRequest(credentials);
+    // Clears out whatever an anonymous visit cached, so a moderator/admin
+    // immediately sees the full unfiltered view rather than a stale
+    // public-only one until staleTime happens to expire.
+    forgetViewerScopedData(queryClient);
     queryClient.setQueryData(ME_QUERY_KEY, loggedInUser);
     return loggedInUser;
   }
 
   async function logout(): Promise<void> {
     await logoutRequest();
+    // Without this, a moderator/admin's cached catalog view — which
+    // includes PENDING/REJECTED rows nobody else can see — keeps
+    // rendering after logout until something happens to refetch it.
+    forgetViewerScopedData(queryClient);
     queryClient.setQueryData(ME_QUERY_KEY, null);
   }
 
