@@ -11,6 +11,7 @@ function buildQueryString(query: CatalogQuery): string {
   if (query.minPrice !== undefined) params.set('minPrice', String(query.minPrice));
   if (query.maxPrice !== undefined) params.set('maxPrice', String(query.maxPrice));
   if (query.negotiable !== undefined) params.set('negotiable', String(query.negotiable));
+  if (query.mine) params.set('mine', String(query.mine));
   query.options?.forEach((option) => params.append('options', option));
   const qs = params.toString();
   return qs ? `?${qs}` : '';
