@@ -5,15 +5,7 @@
   background: var(--surface-2);
 }
 
-/* Same reasoning as ListingCard's mobile photo ratio — full-viewport-width
-   at 4:3 pushes the rest of the detail page below the fold on a phone. */
-@media (max-width: 640px) {
-  .main {
-    aspect-ratio: 16 / 9;
-  }
-}
-
-.main img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.main img { width: 100%; height: 100%; object-fit: contain; display: block; }
 
 .thumbs {
   display: flex;
