@@ -107,6 +107,31 @@ describe('GET /listings (e2e)', () => {
     await request(app.getHttpServer()).get('/api/listings').query({ limit: 'abc' }).expect(400);
   });
 
+  describe('GET /listings?mine=true', () => {
+    it('an anonymous caller gets 401', async () => {
+      await request(app.getHttpServer()).get('/api/listings').query({ mine: 'true' }).expect(401);
+    });
+
+    it("returns the owner's own listings across every status, and nothing belonging to anyone else", async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/listings')
+        .query({ mine: 'true' })
+        .set('Cookie', ownerCookie)
+        .expect(200);
+      const ids = res.body.items.map((item: { id: string }) => item.id);
+      expect(ids).toEqual(expect.arrayContaining([publishedListingId, pendingListingId]));
+    });
+
+    it('a contributor with no listings of their own gets an empty page, not the owner\'s', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/listings')
+        .query({ mine: 'true' })
+        .set('Cookie', otherCookie)
+        .expect(200);
+      expect(res.body.items).toEqual([]);
+    });
+  });
+
   describe('GET /listings/:id', () => {
     it('returns the full detail for a published listing, with photos and no risk', async () => {
       const res = await request(app.getHttpServer()).get(`/api/listings/${publishedListingId}`).expect(200);

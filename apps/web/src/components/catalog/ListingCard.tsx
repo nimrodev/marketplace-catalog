@@ -7,11 +7,15 @@ import styles from './ListingCard.module.css';
 
 export interface ListingCardProps {
   listing: ListingSummary;
+  // My Listings shows every status including PUBLISHED — the badge is the
+  // whole point there. Everywhere else it's only shown for a non-published
+  // row, since that's the one case a viewer (moderator/admin) needs it.
+  showStatus?: boolean;
 }
 
 // aspect-ratio on the photo container reserves its space before the
 // image loads, so arrival never shifts layout (the CLS requirement).
-export function ListingCard({ listing }: ListingCardProps) {
+export function ListingCard({ listing, showStatus = false }: ListingCardProps) {
   return (
     <Card as={Link} to={`/listings/${listing.id}`} interactive className={styles.link}>
       <div className={styles.photo}>
@@ -21,9 +25,9 @@ export function ListingCard({ listing }: ListingCardProps) {
         <div className={styles.catRow}>{listing.category}</div>
         <div className={styles.title}>{listing.title}</div>
         <div className={styles.badgeRow}>
-          {/* Only a moderator/admin ever sees a non-published row here at
-              all — everyone else's catalog is pre-filtered to PUBLISHED. */}
-          {listing.status !== ListingStatus.PUBLISHED && <Badge tone={statusTone(listing.status)}>{listing.status}</Badge>}
+          {(showStatus || listing.status !== ListingStatus.PUBLISHED) && (
+            <Badge tone={statusTone(listing.status)}>{listing.status}</Badge>
+          )}
           <Badge tone={conditionTone(listing.condition)}>{conditionLabel(listing.condition)}</Badge>
         </div>
         <div className={styles.priceRow}>

@@ -50,6 +50,11 @@ export interface CatalogQuery {
   maxPrice?: number;
   options?: ListingOption[];
   negotiable?: boolean;
+  // Scoped to the authenticated caller's own listings, every status
+  // included — the one case where PENDING/REJECTED rows are intentionally
+  // visible outside moderation. Requires auth; ignores every other viewer's
+  // usual PUBLISHED-only scoping rather than composing with it.
+  mine?: boolean;
 }
 
 export interface CreateListingRequest {

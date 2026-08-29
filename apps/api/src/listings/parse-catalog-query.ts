@@ -41,6 +41,10 @@ export function parseCatalogQuery(raw: Record<string, unknown>): CatalogQuery {
     query.negotiable = parseBoolean(raw.negotiable, 'negotiable');
   }
 
+  if (raw.mine !== undefined) {
+    query.mine = parseBoolean(raw.mine, 'mine');
+  }
+
   return query;
 }
 

@@ -246,11 +246,16 @@ export class ListingsRepository {
     return { level: row.level, reasons: row.reasons, flags: row.flags, model: row.model, evaluatedAt: row.evaluatedAt.toISOString() };
   }
 
-  async findCatalogPage(query: CatalogQuery, viewer: Viewer): Promise<Page<ListingSummary>> {
+  // mineUserId bypasses scopeToVisible entirely rather than composing with
+  // it — "my own listings" means every status, which is the one case
+  // where a PENDING/REJECTED row is visible outside moderation.
+  async findCatalogPage(query: CatalogQuery, viewer: Viewer, mineUserId?: string): Promise<Page<ListingSummary>> {
     const limit = clampLimit(query.limit);
 
     let qb = this.repo.createQueryBuilder('listing');
-    qb = scopeToVisible(qb, viewer);
+    qb = mineUserId
+      ? qb.andWhere(NOT_DELETED).andWhere('listing.contributorId = :mineUserId', { mineUserId })
+      : scopeToVisible(qb, viewer);
     qb = applyFilters(qb, query);
 
     if (query.cursor) {

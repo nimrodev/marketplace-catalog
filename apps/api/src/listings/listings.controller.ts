@@ -11,6 +11,7 @@ import {
   Patch,
   Post,
   Query,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ListingDetail, ListingSummary, Page, UserRole } from '@marketplace/shared';
 import { CurrentUser, OptionalCurrentUser } from '../auth/current-user.decorator';
@@ -46,8 +47,11 @@ export class ListingsController {
     @OptionalCurrentUser() user: AuthenticatedUser | undefined,
   ): Promise<Page<ListingSummary>> {
     const query = parseCatalogQuery(rawQuery);
+    if (query.mine && !user) {
+      throw new UnauthorizedException();
+    }
     try {
-      return await this.listings.findCatalogPage(query, toViewer(user));
+      return await this.listings.findCatalogPage(query, toViewer(user), query.mine ? user!.id : undefined);
     } catch (err) {
       if (err instanceof InvalidCursorError) {
         throw new BadRequestException('Invalid cursor');
