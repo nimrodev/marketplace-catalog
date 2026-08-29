@@ -1,15 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs';
+import { PreScreenMessage } from '@marketplace/shared';
 import { createSqsClient } from './sqs-client.factory';
-
-export interface PreScreenMessage {
-  listingId: string;
-  // Not yet populated — lands once structured logging introduces a
-  // correlation id; the shape is ready for it so the worker doesn't need
-  // a second message-format change later.
-  reqId?: string;
-}
 
 @Injectable()
 export class PreScreenQueueService {
