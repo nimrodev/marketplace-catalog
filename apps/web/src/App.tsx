@@ -45,8 +45,8 @@ function AppRoutes() {
 
   return (
     <AppShell
-      brand="The Commons"
-      tagline="Catalog"
+      brand="ReMarket"
+      tagline="Curated finds. Happy exchanges."
       navItems={navItemsFor(user)}
       user={user ? { displayName: user.email, roleLabel: user.role } : undefined}
       onLogout={user ? logout : undefined}
