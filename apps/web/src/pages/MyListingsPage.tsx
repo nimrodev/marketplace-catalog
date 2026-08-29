@@ -1,14 +1,20 @@
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useCatalogQuery } from '../api/listings';
+import { FilterBar } from '../components/catalog/FilterBar';
 import { ListingCard } from '../components/catalog/ListingCard';
+import { useCatalogFilters } from '../components/catalog/useCatalogFilters';
 import { Button, EmptyState, Skeleton } from '../components/primitives';
 import styles from './CatalogPage.module.css';
 
 const SKELETON_COUNT = 4;
 
 export default function MyListingsPage() {
-  const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } = useCatalogQuery({ mine: true });
+  const { filters } = useCatalogFilters();
+  const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } = useCatalogQuery({
+    ...filters,
+    mine: true,
+  });
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -22,10 +28,12 @@ export default function MyListingsPage() {
   }, [hasNextPage, fetchNextPage]);
 
   const items = data?.pages.flatMap((page) => page.items) ?? [];
+  const hasFilters = Object.keys(filters).length > 0;
 
   return (
     <div>
       <h1>My listings</h1>
+      <FilterBar />
 
       {isLoading ? (
         <div className={styles.grid}>
@@ -41,15 +49,19 @@ export default function MyListingsPage() {
           ))}
         </div>
       ) : items.length === 0 ? (
-        <EmptyState
-          title="You haven't submitted anything yet"
-          description="Once you submit a listing, it'll show up here — pending, published, or rejected."
-          action={
-            <Button as={Link} to="/submit" variant="primary">
-              Submit a listing
-            </Button>
-          }
-        />
+        hasFilters ? (
+          <EmptyState title="No listings match your filters" description="Try widening your search or clearing a filter." />
+        ) : (
+          <EmptyState
+            title="You haven't submitted anything yet"
+            description="Once you submit a listing, it'll show up here — pending, published, or rejected."
+            action={
+              <Button as={Link} to="/submit" variant="primary">
+                Submit a listing
+              </Button>
+            }
+          />
+        )
       ) : (
         <>
           <div className={styles.grid}>
