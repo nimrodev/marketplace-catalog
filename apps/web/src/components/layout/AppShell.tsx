@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
 import { cx } from '../cx';
 import { Button } from '../primitives';
@@ -29,46 +29,64 @@ export interface AppShellProps {
 }
 
 export function AppShell({ brand, tagline, navItems, user, onLogout, children }: AppShellProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <div className={styles.shell}>
       <aside className={styles.sidebar}>
-        <div className={styles.brand}>
-          <span className={styles.brandMark}>{brand}</span>
-          {tagline && <span className={styles.brandTag}>{tagline}</span>}
+        <div className={styles.brandRow}>
+          <div className={styles.brand}>
+            <span className={styles.brandMark}>{brand}</span>
+            {tagline && <span className={styles.brandTag}>{tagline}</span>}
+          </div>
+          {/* CSS-only on desktop (display: none) — only interactive below the
+              980px breakpoint where the nav becomes a collapsible dropdown. */}
+          <button
+            type="button"
+            className={styles.menuToggle}
+            aria-expanded={menuOpen}
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            {menuOpen ? '✕' : '☰'}
+          </button>
         </div>
 
-        <nav className={styles.nav} aria-label="Primary">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) => cx(styles.navLink, isActive && styles.navLinkActive)}
-            >
-              {item.icon}
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
+        <div className={cx(styles.collapsible, menuOpen && styles.collapsibleOpen)}>
+          <nav className={styles.nav} aria-label="Primary">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                onClick={() => setMenuOpen(false)}
+                className={({ isActive }) => cx(styles.navLink, isActive && styles.navLinkActive)}
+              >
+                {item.icon}
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
 
-        {user && (
-          <div className={styles.foot}>
-            <div className={styles.user}>
-              <span className={styles.avatar} aria-hidden="true">
-                {user.displayName.charAt(0).toUpperCase()}
-              </span>
-              <div>
-                <div className={styles.userName}>{user.displayName}</div>
-                <div className={styles.userRole}>{user.roleLabel}</div>
+          {user && (
+            <div className={styles.foot}>
+              <div className={styles.user}>
+                <span className={styles.avatar} aria-hidden="true">
+                  {user.displayName.charAt(0).toUpperCase()}
+                </span>
+                <div>
+                  <div className={styles.userName}>{user.displayName}</div>
+                  <div className={styles.userRole}>{user.roleLabel}</div>
+                </div>
               </div>
+              {onLogout && (
+                <Button variant="ghost" onClick={onLogout}>
+                  Log out
+                </Button>
+              )}
             </div>
-            {onLogout && (
-              <Button variant="ghost" onClick={onLogout}>
-                Log out
-              </Button>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </aside>
 
       <main className={styles.main}>

@@ -14,9 +14,30 @@
   border-right: 1px solid var(--chrome-border);
 }
 
+.brandRow { display: flex; align-items: center; justify-content: space-between; }
 .brand { display: flex; flex-direction: column; gap: 2px; margin-bottom: var(--space-7); }
 .brandMark { font-family: var(--font-display); font-size: var(--text-xl); letter-spacing: 0.01em; }
 .brandTag { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.14em; color: var(--chrome-text-muted); }
+
+/* Hidden on desktop — the sidebar nav is always visible there, so there's
+   nothing to toggle. */
+.menuToggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--chrome-text);
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: var(--space-2);
+  cursor: pointer;
+}
+.menuToggle:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--chrome-accent); border-radius: var(--radius-sm); }
+
+/* `display: contents` on desktop: the wrapper is transparent to layout,
+   so nav+foot participate in .sidebar's flex column exactly as if this
+   element weren't here. The mobile media query below is what actually
+   makes it collapsible. */
+.collapsible { display: contents; }
 
 .nav { display: flex; flex-direction: column; gap: 2px; }
 .navLink {
@@ -75,9 +96,11 @@
 .mainInner { max-width: 1040px; }
 
 @media (max-width: 980px) {
-  /* A cramped single-row bar (brand + every nav link + user, horizontally
-     scrolling to fit) reads as broken, not compact — stacked rows that
-     each fit the viewport on their own read as an intentional top bar. */
+  /* A single row cramming brand + every nav link + user, horizontally
+     scrolling to fit, read as broken rather than compact. A slim bar
+     that expands into a dropdown on tap is the standard mobile pattern
+     instead — nav/foot keep their normal desktop (vertical list) styling,
+     just shown or hidden as a block. */
   .shell { flex-direction: column; }
   .sidebar {
     position: static;
@@ -85,13 +108,12 @@
     height: auto;
     flex-direction: column;
     align-items: stretch;
-    gap: var(--space-3);
     padding: var(--space-4) var(--space-5);
   }
   .brand { margin-bottom: 0; }
-  .nav { flex-direction: row; flex-wrap: wrap; gap: var(--space-1); }
-  .navLink { border-left: none; border-bottom: 2px solid transparent; white-space: nowrap; padding: var(--space-2) var(--space-3); }
-  .navLinkActive { border-left-color: transparent; border-bottom-color: var(--chrome-accent); }
+  .menuToggle { display: block; }
+  .collapsible { display: none; }
+  .collapsibleOpen { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-4); }
   .foot {
     margin-top: 0;
     padding-top: var(--space-3);
