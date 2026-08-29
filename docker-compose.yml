@@ -15,7 +15,7 @@ services:
         awslogs-region: eu-central-1
         awslogs-group: /marketplace/prod
         awslogs-create-group: "true"
-        awslogs-stream-prefix: api
+        tag: api
 
   worker:
     platform: linux/arm64
@@ -31,7 +31,7 @@ services:
         awslogs-region: eu-central-1
         awslogs-group: /marketplace/prod
         awslogs-create-group: "true"
-        awslogs-stream-prefix: worker
+        tag: worker
 
   caddy:
     platform: linux/arm64
@@ -57,7 +57,7 @@ services:
         awslogs-region: eu-central-1
         awslogs-group: /marketplace/prod
         awslogs-create-group: "true"
-        awslogs-stream-prefix: caddy
+        tag: caddy
 
 volumes:
   caddy_data:
