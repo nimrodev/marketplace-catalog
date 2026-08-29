@@ -23,12 +23,13 @@ FROM deps AS build
 COPY . .
 RUN pnpm --filter @marketplace/shared build
 RUN pnpm --filter @marketplace/worker build
-# Same cache mount/store-dir as the install above — without it, `pnpm
-# deploy` re-resolves and re-fetches every prod dependency from the
-# registry from scratch, which is what was timing this step out under
-# npmjs.org flakiness instead of hitting the already-warm local store.
+# --prefer-offline: the install above already resolved and fetched this
+# exact lockfile's full graph into the shared store, so deploy shouldn't
+# need the registry again — prefer-offline (not offline) because pnpm's
+# metadata mirror cache lives outside this cache mount and isn't
+# guaranteed warm, unlike the tarball store itself.
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm-store,sharing=locked \
-    pnpm --filter @marketplace/worker deploy --prod --legacy --store-dir=/pnpm-store /prod/worker
+    pnpm --filter @marketplace/worker deploy --prod --legacy --prefer-offline --store-dir=/pnpm-store /prod/worker
 
 FROM base AS worker
 WORKDIR /app
