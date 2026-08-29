@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { NavLink } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { cx } from '../cx';
 import { Button } from '../primitives';
 import styles from './AppShell.module.css';
@@ -35,10 +35,10 @@ export function AppShell({ brand, tagline, navItems, user, onLogout, children }:
     <div className={styles.shell}>
       <aside className={styles.sidebar}>
         <div className={styles.brandRow}>
-          <div className={styles.brand}>
+          <Link className={styles.brand} to="/" onClick={() => setMenuOpen(false)}>
             <span className={styles.brandMark}>{brand}</span>
             {tagline && <span className={styles.brandTag}>{tagline}</span>}
-          </div>
+          </Link>
           {/* CSS-only on desktop (display: none) — only interactive below the
               980px breakpoint where the nav becomes a collapsible dropdown. */}
           <button
