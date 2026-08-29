@@ -68,6 +68,41 @@ services:
       - shared_node_modules:/repo/packages/shared/node_modules
       - root_node_modules:/repo/node_modules
 
+  worker:
+    build:
+      context: .
+      # Same shared deps stage as api/web — see the web service's comment.
+      dockerfile: infra/docker/api.Dockerfile
+      target: deps
+    working_dir: /repo
+    command: pnpm --filter @marketplace/worker dev
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://marketplace:marketplace@postgres:5432/marketplace_dev
+      AWS_REGION: eu-central-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      SQS_PRESCREEN_QUEUE_URL: http://localstack:4566/000000000000/marketplace-prescreen
+      SQS_ENDPOINT: http://localstack:4566
+      S3_PHOTOS_BUCKET: marketplace-catalog-photos
+      S3_ENDPOINT: http://localstack:4566
+      # Optional — unset means the worker persists deterministic-only risk,
+      # same degrade-cleanly behavior as the API's AI features.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    volumes:
+      - .:/repo
+      - api_node_modules:/repo/apps/api/node_modules
+      - web_node_modules:/repo/apps/web/node_modules
+      - worker_node_modules:/repo/apps/worker/node_modules
+      - shared_node_modules:/repo/packages/shared/node_modules
+      - root_node_modules:/repo/node_modules
+
   web:
     build:
       context: .
@@ -97,5 +132,6 @@ volumes:
   postgres_data:
   api_node_modules:
   web_node_modules:
+  worker_node_modules:
   shared_node_modules:
   root_node_modules:
