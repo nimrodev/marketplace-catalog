@@ -92,9 +92,11 @@ services:
       SQS_ENDPOINT: http://localstack:4566
       S3_PHOTOS_BUCKET: marketplace-catalog-photos
       S3_ENDPOINT: http://localstack:4566
-      # Optional — unset means the worker persists deterministic-only risk,
-      # same degrade-cleanly behavior as the API's AI features.
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # Deliberately not declared here — dotenv loads it from .env.local
+      # (same as the api service). Declaring it as ${ANTHROPIC_API_KEY:-}
+      # would set an empty string in the container's env before Node even
+      # starts, and dotenv never overrides an already-set var, so the real
+      # value in .env.local would be silently shadowed.
     volumes:
       - .:/repo
       - api_node_modules:/repo/apps/api/node_modules
