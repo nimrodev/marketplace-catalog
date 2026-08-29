@@ -7,8 +7,9 @@ import { UserThrottlerGuard } from './user-throttler.guard';
 @Module({
   controllers: [UploadsController],
   providers: [UploadsService, UserThrottlerGuard, PhotoOwnershipValidator],
-  // PhotoOwnershipValidator is consumed by ListingsModule once the create
-  // endpoint exists (MAR-18) and by the AI draft endpoint (MAR-31).
-  exports: [PhotoOwnershipValidator],
+  // PhotoOwnershipValidator and UserThrottlerGuard are reused by the AI
+  // draft endpoint, which re-runs the same ownership check and needs its
+  // own per-user rate limit.
+  exports: [PhotoOwnershipValidator, UserThrottlerGuard],
 })
 export class UploadsModule {}

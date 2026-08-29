@@ -1,9 +1,9 @@
-import { forwardRef, useId, type SelectHTMLAttributes } from 'react';
+import { forwardRef, useId, type ReactNode, type SelectHTMLAttributes } from 'react';
 import { cx } from '../../cx';
 import styles from './Select.module.css';
 
 export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
-  label?: string;
+  label?: ReactNode;
   error?: string;
 }
 
