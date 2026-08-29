@@ -1,9 +1,9 @@
 import { ArrayMaxSize, ArrayMinSize, IsArray, IsString } from 'class-validator';
 import { DraftListingRequest } from '@marketplace/shared';
 
-// Capped at 3 — matches the number of photos actually sent to the vision
-// model, so a caller can't pad the request past what the endpoint uses.
-const MAX_PHOTO_KEYS = 3;
+// Shared with draft-listing.service.ts's fetchImages cap, so a caller
+// can't pad the request past what the endpoint actually sends the model.
+export const MAX_PHOTO_KEYS = 3;
 
 export class DraftListingRequestDto implements DraftListingRequest {
   @IsArray()

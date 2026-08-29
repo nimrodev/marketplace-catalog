@@ -8,11 +8,8 @@ import { PhotoOwnershipValidator } from '../uploads/photo-ownership.validator';
 import { AiSchemaValidationError, AiTimeoutError, AiUnavailableError } from './ai-errors';
 import { AnthropicClientService, StructuredImage } from './anthropic-client.service';
 import { DRAFT_LISTING_MODEL } from './anthropic-models';
+import { MAX_PHOTO_KEYS } from './dto/draft-listing-request.dto';
 
-// The vision call gets diminishing returns past a handful of photos and
-// direct S3 reads cost latency and money — 3 is enough context for a
-// reasonable draft without ballooning the request.
-const MAX_PHOTOS_SENT_TO_MODEL = 3;
 const TIMEOUT_MS = 15_000;
 const TOOL_NAME = 'emit_listing_draft';
 
@@ -68,7 +65,7 @@ export class DraftListingService {
   async draft(userId: string, photoKeys: string[]): Promise<DraftListingResponse> {
     await this.ownership.validate(userId, photoKeys);
 
-    const images = await this.fetchImages(photoKeys.slice(0, MAX_PHOTOS_SENT_TO_MODEL));
+    const images = await this.fetchImages(photoKeys.slice(0, MAX_PHOTO_KEYS));
 
     try {
       return await this.anthropic.generateStructured({
