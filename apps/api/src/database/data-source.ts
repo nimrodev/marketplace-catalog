@@ -25,4 +25,11 @@ if (!url) {
   throw new Error('DATABASE_URL_UNPOOLED or DATABASE_URL must be set to run migrations.');
 }
 
+// Guards against a resolved URL pointing somewhere unintended; only the
+// deploy pipeline sets ALLOW_PROD_MIGRATION.
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', 'postgres']);
+if (!LOCAL_HOSTS.has(new URL(url).hostname) && process.env.ALLOW_PROD_MIGRATION !== 'true') {
+  throw new Error('Refusing migration against a non-local host. Set ALLOW_PROD_MIGRATION=true if intentional.');
+}
+
 export default new DataSource(buildDataSourceOptions(url));

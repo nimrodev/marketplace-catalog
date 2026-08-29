@@ -209,7 +209,7 @@ jobs:
             set -euo pipefail
             cd ~/app
             docker compose pull
-            docker compose run --rm api node_modules/.bin/typeorm-ts-node-commonjs migration:run -d dist/database/data-source.js
+            docker compose run --rm -e ALLOW_PROD_MIGRATION=true api node_modules/.bin/typeorm-ts-node-commonjs migration:run -d dist/database/data-source.js
             docker compose up -d
           '
 
