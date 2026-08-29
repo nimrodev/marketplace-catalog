@@ -5,6 +5,7 @@ export interface DeterministicCheckInput {
   description: string;
   price: number;
   category: ListingCategory;
+  photoCount: number;
 }
 
 export interface DeterministicCheckResult {
@@ -48,6 +49,16 @@ const CATEGORY_PRICE_RANGE: Record<ListingCategory, { min: number; max: number }
 
 const ORDER_OF_MAGNITUDE = 10;
 
+// Double the DTO layer's 20-char minimum: long enough to clear that gate
+// yet still just the title restated, which this function re-checks on its
+// own since a worker reprocessing a listing later doesn't go through DTO
+// validation again.
+const MIN_INFORMATIVE_DESCRIPTION_LENGTH = 40;
+
+function normalize(text: string): string {
+  return text.trim().toLowerCase();
+}
+
 // Pure, no I/O — shared between the synchronous submit path (MAR-17) and
 // the pre-screen worker (MAR-32/34), so moderation still functions when
 // the AI model is unavailable. Callers decide what HIGH means for them:
@@ -75,6 +86,15 @@ export function runDeterministicChecks(input: DeterministicCheckInput): Determin
   const range = CATEGORY_PRICE_RANGE[input.category];
   if (input.price < range.min / ORDER_OF_MAGNITUDE || input.price > range.max * ORDER_OF_MAGNITUDE) {
     flags.push('price is far outside the typical range for this category');
+  }
+
+  const normalizedDescription = normalize(input.description);
+  if (normalizedDescription.length < MIN_INFORMATIVE_DESCRIPTION_LENGTH || normalizedDescription === normalize(input.title)) {
+    flags.push('description is too short or duplicates the title');
+  }
+
+  if (input.photoCount === 0) {
+    flags.push('no photo attached');
   }
 
   return { level: flags.length > 0 ? RiskLevel.MEDIUM : RiskLevel.LOW, reasons, flags };

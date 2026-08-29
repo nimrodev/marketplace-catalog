@@ -24,6 +24,7 @@ export class ListingsService {
       description: dto.description,
       price: dto.price,
       category: dto.category,
+      photoCount: dto.photoKeys.length,
     });
     if (screen.level === RiskLevel.HIGH) {
       throw new BadRequestException(`This listing cannot be submitted: ${screen.reasons.join(', ')}.`);
@@ -54,6 +55,10 @@ export class ListingsService {
       description: dto.description ?? listing.description,
       price: dto.price ?? Number(listing.price),
       category: dto.category ?? listing.category,
+      // Photos unchanged when photoKeys is absent from the update — the
+      // existing row is guaranteed non-zero (photoOwnership.validate above
+      // enforces layer-1's minimum whenever photoKeys is provided).
+      photoCount: dto.photoKeys?.length ?? 1,
     });
     if (screen.level === RiskLevel.HIGH) {
       throw new BadRequestException(`This listing cannot be submitted: ${screen.reasons.join(', ')}.`);

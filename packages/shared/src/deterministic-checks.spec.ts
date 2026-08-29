@@ -8,6 +8,7 @@ function listing(overrides: Partial<Parameters<typeof runDeterministicChecks>[0]
     description: 'A well-loved bicycle, barely used, ready for a new home.',
     price: 150,
     category: ListingCategory.SPORTS_OUTDOORS,
+    photoCount: 1,
     ...overrides,
   };
 }
@@ -42,7 +43,9 @@ describe('runDeterministicChecks', () => {
     });
 
     it('does not false-positive on a substring inside an unrelated word', () => {
-      const result = runDeterministicChecks(listing({ description: 'A rugged, fireguns-proof storage case' }));
+      const result = runDeterministicChecks(
+        listing({ description: 'A rugged, fireguns-proof storage case, great for tools' }),
+      );
       expect(result.level).toBe(RiskLevel.LOW);
     });
 
@@ -91,6 +94,29 @@ describe('runDeterministicChecks', () => {
     it('does not flag a price merely at the edge of the category range', () => {
       const result = runDeterministicChecks(listing({ category: ListingCategory.VEHICLES, price: 200 }));
       expect(result.level).toBe(RiskLevel.LOW);
+    });
+
+    it('flags a description that duplicates the title, even when both are long enough to clear the length check', () => {
+      const longDuplicate = 'A well-loved vintage bicycle in great condition throughout';
+      const result = runDeterministicChecks(listing({ title: longDuplicate, description: longDuplicate }));
+      expect(result.level).toBe(RiskLevel.MEDIUM);
+      expect(result.flags).toContain('description is too short or duplicates the title');
+    });
+
+    it('flags a description below the informative-length threshold (39 chars)', () => {
+      const result = runDeterministicChecks(listing({ description: 'x'.repeat(39) }));
+      expect(result.level).toBe(RiskLevel.MEDIUM);
+    });
+
+    it('does not flag a description right at the length threshold (40 chars), distinct from the title', () => {
+      const result = runDeterministicChecks(listing({ description: 'x'.repeat(40) }));
+      expect(result.level).toBe(RiskLevel.LOW);
+    });
+
+    it('flags a listing with no photos', () => {
+      const result = runDeterministicChecks(listing({ photoCount: 0 }));
+      expect(result.level).toBe(RiskLevel.MEDIUM);
+      expect(result.flags).toContain('no photo attached');
     });
   });
 });
