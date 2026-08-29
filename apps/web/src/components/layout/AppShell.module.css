@@ -75,20 +75,31 @@
 .mainInner { max-width: 1040px; }
 
 @media (max-width: 980px) {
+  /* A cramped single-row bar (brand + every nav link + user, horizontally
+     scrolling to fit) reads as broken, not compact — stacked rows that
+     each fit the viewport on their own read as an intentional top bar. */
   .shell { flex-direction: column; }
   .sidebar {
     position: static;
     width: 100%;
     height: auto;
-    flex-direction: row;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
     padding: var(--space-4) var(--space-5);
   }
-  .brand { margin-bottom: 0; margin-right: var(--space-6); }
-  .nav { flex-direction: row; overflow-x: auto; }
-  .navLink { border-left: none; border-bottom: 2px solid transparent; white-space: nowrap; }
+  .brand { margin-bottom: 0; }
+  .nav { flex-direction: row; flex-wrap: wrap; gap: var(--space-1); }
+  .navLink { border-left: none; border-bottom: 2px solid transparent; white-space: nowrap; padding: var(--space-2) var(--space-3); }
   .navLinkActive { border-left-color: transparent; border-bottom-color: var(--chrome-accent); }
-  .foot { display: none; }
+  .foot {
+    margin-top: 0;
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--chrome-border);
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
   .main { padding: var(--space-6) var(--space-5) var(--space-7); }
 }
 

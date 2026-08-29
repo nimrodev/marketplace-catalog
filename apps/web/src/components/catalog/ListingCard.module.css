@@ -6,6 +6,15 @@
   overflow: hidden;
 }
 
+/* A single-column mobile card at 4:3 eats a disproportionate share of a
+   phone's vertical space — a wider, shorter ratio keeps more of the
+   catalog visible per scroll. */
+@media (max-width: 640px) {
+  .photo {
+    aspect-ratio: 16 / 9;
+  }
+}
+
 .photo img {
   width: 100%;
   height: 100%;
