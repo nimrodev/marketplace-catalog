@@ -22,6 +22,10 @@ export function toFieldErrors(errors: ValidationError[], prefix = ''): Record<st
 // Shared by main.ts and the e2e suite so the pipe/prefix config used in
 // production is exactly what the tests exercise — no risk of the two drifting.
 export function configureApp(app: INestApplication): void {
+  // Caddy terminates the client connection and forwards over plain HTTP
+  // inside the Docker network — without this, req.secure is always false
+  // behind the proxy, even once Caddy is actually serving HTTPS (MAR-44).
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
   // Needed to read the httpOnly auth cookie off incoming requests (MAR-12).
   app.use(cookieParser());
   app.useGlobalPipes(

@@ -1,6 +1,5 @@
-import { Body, Controller, Get, HttpCode, Post, Res } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import type { CookieOptions, Response } from 'express';
+import { Body, Controller, Get, HttpCode, Post, Req, Res } from '@nestjs/common';
+import type { CookieOptions, Request, Response } from 'express';
 import { AuthUser } from '@marketplace/shared';
 import { AuthService } from './auth.service';
 import { CurrentUser } from './current-user.decorator';
@@ -11,18 +10,17 @@ import { AUTH_COOKIE_NAME, SESSION_MAX_AGE_MS } from './session.constants';
 
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private readonly authService: AuthService,
-    private readonly config: ConfigService,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
 
-  // secure:false locally (Compose/dev over plain HTTP) or the cookie
-  // would silently never be sent by the browser; true in production,
-  // where Caddy terminates TLS in front of the API (PLAN.md).
-  private cookieOptions(): CookieOptions {
+  // Driven by the actual connection (req.secure — trust-proxy-aware, see
+  // bootstrap.ts), not NODE_ENV: a NODE_ENV=production request that's
+  // still plain HTTP (Caddy TLS is MAR-44, not yet built) must still get
+  // secure:false, or the browser silently refuses to store the cookie at
+  // all and every authenticated request 401s despite a "successful" login.
+  private cookieOptions(req: Request): CookieOptions {
     return {
       httpOnly: true,
-      secure: this.config.get('NODE_ENV') === 'production',
+      secure: req.secure,
       sameSite: 'lax',
       path: '/',
     };
@@ -31,18 +29,22 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(200)
-  async login(@Body() dto: LoginRequestDto, @Res({ passthrough: true }) res: Response): Promise<AuthUser> {
+  async login(
+    @Body() dto: LoginRequestDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AuthUser> {
     const user = await this.authService.validateLogin(dto.email, dto.password);
     const token = this.authService.signToken(user);
-    res.cookie(AUTH_COOKIE_NAME, token, { ...this.cookieOptions(), maxAge: SESSION_MAX_AGE_MS });
+    res.cookie(AUTH_COOKIE_NAME, token, { ...this.cookieOptions(req), maxAge: SESSION_MAX_AGE_MS });
     return user;
   }
 
   @Public()
   @Post('logout')
   @HttpCode(200)
-  logout(@Res({ passthrough: true }) res: Response): { success: true } {
-    res.clearCookie(AUTH_COOKIE_NAME, this.cookieOptions());
+  logout(@Req() req: Request, @Res({ passthrough: true }) res: Response): { success: true } {
+    res.clearCookie(AUTH_COOKIE_NAME, this.cookieOptions(req));
     return { success: true };
   }
 
