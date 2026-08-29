@@ -159,8 +159,14 @@ jobs:
       - name: Smoke check
         if: steps.target.outputs.ready == 'true'
         run: |
-          for _attempt in $(seq 1 10); do
-            if curl -sf "http://${{ secrets.EC2_HOST }}/health" && curl -sf "http://${{ secrets.EC2_HOST }}/health/ready"; then
+          # https, not http — Caddy auto-redirects :80 to :443, and curl
+          # without -L treats a redirect as a "successful" response, so an
+          # http check here would pass even if the app were actually down.
+          # 20 attempts (up to 60s) gives a first-ever cert issuance via
+          # ACME room to finish, not just an already-warm cache hit.
+          url="https://${{ secrets.EC2_HOST }}.sslip.io"
+          for _attempt in $(seq 1 20); do
+            if curl -sf "$url/health" && curl -sf "$url/health/ready"; then
               echo "Deploy verified healthy."
               exit 0
             fi

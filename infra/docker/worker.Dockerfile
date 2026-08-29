@@ -9,7 +9,7 @@ WORKDIR /repo
 ENV NODE_OPTIONS=--max-old-space-size=1536
 
 FROM base AS deps
-COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json .npmrc ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
 COPY apps/worker/package.json apps/worker/package.json

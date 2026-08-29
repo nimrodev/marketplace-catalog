@@ -1,4 +1,4 @@
-:80 {
+18.193.228.86.sslip.io {
 	encode gzip
 
 	@api path /api /api/* /health /health/ready
