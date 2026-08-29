@@ -65,10 +65,18 @@ export class ModerationRepository {
     }
 
     if (query.cursor) {
+      // Not a single tuple comparison: created_at sorts DESC while risk
+      // rank and id sort ASC, and Postgres row-constructor comparison only
+      // supports one direction across all columns. Three OR'd clauses
+      // express "strictly after the cursor row in this mixed-direction
+      // order" instead.
       const cursor = decodeQueueCursor(query.cursor);
       params.push(cursor.riskRank, cursor.createdAt, cursor.id);
+      const [rankParam, createdAtParam, idParam] = [params.length - 2, params.length - 1, params.length];
       conditions.push(
-        `(${RISK_RANK_SQL}, l.created_at, l.id) > ($${params.length - 2}, $${params.length - 1}::timestamptz, $${params.length})`,
+        `((${RISK_RANK_SQL}) > $${rankParam}
+          OR ((${RISK_RANK_SQL}) = $${rankParam} AND l.created_at < $${createdAtParam}::timestamptz)
+          OR ((${RISK_RANK_SQL}) = $${rankParam} AND l.created_at = $${createdAtParam}::timestamptz AND l.id > $${idParam}))`,
       );
     }
 
@@ -83,7 +91,7 @@ export class ModerationRepository {
        JOIN users u ON u.id = l.contributor_id
        LEFT JOIN listing_risk lr ON lr.listing_id = l.id
        WHERE ${conditions.join(' AND ')}
-       ORDER BY (${RISK_RANK_SQL}) ASC, l.created_at ASC, l.id ASC
+       ORDER BY (${RISK_RANK_SQL}) ASC, l.created_at DESC, l.id ASC
        LIMIT $${params.length}`,
       params,
     );

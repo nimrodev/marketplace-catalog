@@ -117,6 +117,16 @@ describe('GET /moderation/queue (e2e)', () => {
     expect(unassessedItem.risk).toBeNull();
   });
 
+  it('within the same risk tier, the most recently submitted listing appears first', async () => {
+    const older = await insertPendingListing('Queue order — older unassessed item');
+    const newer = await insertPendingListing('Queue order — newer unassessed item');
+
+    const res = await request(app.getHttpServer()).get('/api/moderation/queue').set('Cookie', cookies.moderator).expect(200);
+    const ids = res.body.items.map((i: { id: string }) => i.id);
+
+    expect(ids.indexOf(newer)).toBeLessThan(ids.indexOf(older));
+  });
+
   it('a published listing never appears in the queue', async () => {
     const id = await insertPendingListing('Published listing excluded from queue', { status: 'PUBLISHED' });
     const res = await request(app.getHttpServer()).get('/api/moderation/queue').set('Cookie', cookies.moderator).expect(200);
