@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { PreScreenModule } from '../pre-screen/pre-screen.module';
 import { UploadsModule } from '../uploads/uploads.module';
 import { Listing } from './listing.entity';
 import { ListingPhoto } from './listing-photo.entity';
@@ -9,7 +10,7 @@ import { ListingsRepository } from './listings.repository';
 import { ListingsService } from './listings.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Listing, ListingPhoto, ListingRisk]), UploadsModule],
+  imports: [TypeOrmModule.forFeature([Listing, ListingPhoto, ListingRisk]), UploadsModule, PreScreenModule],
   controllers: [ListingsController],
   providers: [ListingsRepository, ListingsService],
   exports: [ListingsRepository],

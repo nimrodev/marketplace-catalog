@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundEx
 import { LISTING_LIMITS, ListingDetail, ListingStatus, RiskLevel, UserRole, runDeterministicChecks } from '@marketplace/shared';
 import { PhotoOwnershipValidator } from '../uploads/photo-ownership.validator';
 import { AuthenticatedUser } from '../auth/jwt-payload';
+import { PreScreenQueueService } from '../pre-screen/pre-screen-queue.service';
 import { CreateListingRequestDto } from './dto/create-listing-request.dto';
 import { UpdateListingRequestDto } from './dto/update-listing-request.dto';
 import { transition as transitionListing } from './listing-state-machine';
@@ -14,6 +15,7 @@ export class ListingsService {
   constructor(
     private readonly listings: ListingsRepository,
     private readonly photoOwnership: PhotoOwnershipValidator,
+    private readonly preScreenQueue: PreScreenQueueService,
   ) {}
 
   async create(contributorId: string, dto: CreateListingRequestDto): Promise<ListingDetail> {
@@ -30,9 +32,11 @@ export class ListingsService {
       throw new BadRequestException(`This listing cannot be submitted: ${screen.reasons.join(', ')}.`);
     }
 
-    // Pre-screen queue publish is deliberately not wired up — no queue
-    // consumer exists yet.
-    return this.listings.create(contributorId, dto);
+    const created = await this.listings.create(contributorId, dto);
+    // After the transaction, never inside it — the worker must never pick
+    // up a listing that isn't durably committed yet.
+    await this.preScreenQueue.enqueue(created.id);
+    return created;
   }
 
   async update(actor: AuthenticatedUser, listingId: string, dto: UpdateListingRequestDto): Promise<ListingDetail> {
@@ -66,9 +70,8 @@ export class ListingsService {
 
     const nextStatus = transitionListing(listing.status, 'edit', { role: actor.role });
     const rejectionReason = nextStatus === ListingStatus.PENDING ? null : listing.rejectionReason;
+    const entersReview = listing.status !== ListingStatus.PENDING && nextStatus === ListingStatus.PENDING;
 
-    // Pre-screen re-enqueue is deliberately not wired up — no queue
-    // consumer exists yet, same as create() above.
     let minPrice: string | null | undefined;
     if (dto.minPrice !== undefined) {
       minPrice = dto.minPrice.toFixed(LISTING_LIMITS.price.maxDecimals);
@@ -91,6 +94,11 @@ export class ListingsService {
       { status: nextStatus, rejectionReason },
       dto.photoKeys,
     );
+
+    if (entersReview) {
+      // After the transaction, never inside it — same reasoning as create().
+      await this.preScreenQueue.enqueue(listingId);
+    }
 
     const viewer: Viewer =
       actor.role === UserRole.CONTRIBUTOR ? { role: UserRole.CONTRIBUTOR, userId: actor.id } : { role: actor.role };

@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, NotFoundException } from '@nes
 import { ListingCategory, ListingCondition, ListingOption, ListingStatus, UserRole } from '@marketplace/shared';
 import { PhotoOwnershipValidator } from '../uploads/photo-ownership.validator';
 import { AuthenticatedUser } from '../auth/jwt-payload';
+import { PreScreenQueueService } from '../pre-screen/pre-screen-queue.service';
 import { CreateListingRequestDto } from './dto/create-listing-request.dto';
 import { UpdateListingRequestDto } from './dto/update-listing-request.dto';
 import { Listing } from './listing.entity';
@@ -25,12 +26,14 @@ function validDto(overrides: Partial<CreateListingRequestDto> = {}): CreateListi
 describe('ListingsService.create', () => {
   let repository: jest.Mocked<ListingsRepository>;
   let photoOwnership: jest.Mocked<PhotoOwnershipValidator>;
+  let preScreenQueue: jest.Mocked<PreScreenQueueService>;
   let service: ListingsService;
 
   beforeEach(() => {
     repository = { create: jest.fn() } as unknown as jest.Mocked<ListingsRepository>;
     photoOwnership = { validate: jest.fn() } as unknown as jest.Mocked<PhotoOwnershipValidator>;
-    service = new ListingsService(repository, photoOwnership);
+    preScreenQueue = { enqueue: jest.fn() } as unknown as jest.Mocked<PreScreenQueueService>;
+    service = new ListingsService(repository, photoOwnership, preScreenQueue);
   });
 
   it('validates photo ownership before running the legality screen', async () => {
@@ -49,7 +52,7 @@ describe('ListingsService.create', () => {
     expect(repository.create).not.toHaveBeenCalled();
   });
 
-  it('persists a clean listing', async () => {
+  it('persists a clean listing and enqueues it for pre-screening', async () => {
     photoOwnership.validate.mockResolvedValue(undefined);
     const dto = validDto();
     repository.create.mockResolvedValue({ id: 'listing-1' } as never);
@@ -58,6 +61,15 @@ describe('ListingsService.create', () => {
 
     expect(repository.create).toHaveBeenCalledWith('user-1', dto);
     expect(result).toEqual({ id: 'listing-1' });
+    expect(preScreenQueue.enqueue).toHaveBeenCalledWith('listing-1');
+  });
+
+  it('never enqueues when the listing is rejected outright', async () => {
+    photoOwnership.validate.mockResolvedValue(undefined);
+
+    await expect(service.create('user-1', validDto({ description: 'Selling a rifle, barely used' }))).rejects.toThrow();
+
+    expect(preScreenQueue.enqueue).not.toHaveBeenCalled();
   });
 
   it('persists a soft-hit listing too — MEDIUM is accepted, not rejected', async () => {
@@ -100,6 +112,7 @@ const moderator: AuthenticatedUser = { id: 'mod-1', role: UserRole.MODERATOR };
 describe('ListingsService.update', () => {
   let repository: jest.Mocked<ListingsRepository>;
   let photoOwnership: jest.Mocked<PhotoOwnershipValidator>;
+  let preScreenQueue: jest.Mocked<PreScreenQueueService>;
   let service: ListingsService;
 
   beforeEach(() => {
@@ -109,7 +122,8 @@ describe('ListingsService.update', () => {
       findDetail: jest.fn(),
     } as unknown as jest.Mocked<ListingsRepository>;
     photoOwnership = { validate: jest.fn() } as unknown as jest.Mocked<PhotoOwnershipValidator>;
-    service = new ListingsService(repository, photoOwnership);
+    preScreenQueue = { enqueue: jest.fn() } as unknown as jest.Mocked<PreScreenQueueService>;
+    service = new ListingsService(repository, photoOwnership, preScreenQueue);
   });
 
   it('404s when the listing does not exist', async () => {
@@ -138,7 +152,7 @@ describe('ListingsService.update', () => {
     expect(repository.update).toHaveBeenCalledTimes(1);
   });
 
-  it('reverts a PUBLISHED listing to PENDING and clears rejectionReason when the owner edits it', async () => {
+  it('reverts a PUBLISHED listing to PENDING, clears rejectionReason, and enqueues it for pre-screening', async () => {
     repository.findEditableById.mockResolvedValue(existingListing({ status: ListingStatus.PUBLISHED }));
     repository.findDetail.mockResolvedValue({ id: 'listing-1' } as never);
 
@@ -150,9 +164,10 @@ describe('ListingsService.update', () => {
       { status: ListingStatus.PENDING, rejectionReason: null },
       undefined,
     );
+    expect(preScreenQueue.enqueue).toHaveBeenCalledWith('listing-1');
   });
 
-  it('leaves a PUBLISHED listing untouched when a moderator edits it', async () => {
+  it('leaves a PUBLISHED listing untouched, and does not enqueue, when a moderator edits it', async () => {
     repository.findEditableById.mockResolvedValue(existingListing({ status: ListingStatus.PUBLISHED }));
     repository.findDetail.mockResolvedValue({ id: 'listing-1' } as never);
 
@@ -164,6 +179,16 @@ describe('ListingsService.update', () => {
       { status: ListingStatus.PUBLISHED, rejectionReason: null },
       undefined,
     );
+    expect(preScreenQueue.enqueue).not.toHaveBeenCalled();
+  });
+
+  it('does not re-enqueue a contributor editing an already-PENDING listing', async () => {
+    repository.findEditableById.mockResolvedValue(existingListing({ status: ListingStatus.PENDING }));
+    repository.findDetail.mockResolvedValue({ id: 'listing-1' } as never);
+
+    await service.update(owner, 'listing-1', Object.assign(new UpdateListingRequestDto(), { title: 'New title' }));
+
+    expect(preScreenQueue.enqueue).not.toHaveBeenCalled();
   });
 
   it('re-validates photo ownership against the listing owner, not the acting moderator', async () => {
