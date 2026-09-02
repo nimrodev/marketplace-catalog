@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   LISTING_LIMITS,
   ListingCategory,
@@ -68,6 +69,7 @@ const SERVER_FIELD_TO_FORM_FIELD: Record<string, keyof ListingFormValues | 'phot
 
 export function ListingForm({ mode, listing }: ListingFormProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [values, setValues] = useState<ListingFormValues>(() => initialValues(listing));
   const [photos, setPhotos] = useState<PhotoItem[]>(() => initialPhotos(listing));
   const [clientErrors, setClientErrors] = useState<ListingFieldErrors>({});
@@ -186,6 +188,8 @@ export function ListingForm({ mode, listing }: ListingFormProps) {
     setSubmitting(true);
     try {
       const saved = mode === 'create' ? await createListing(payload) : await updateListing(listing.id, payload);
+      queryClient.setQueryData(['listing', saved.id], saved);
+      queryClient.invalidateQueries({ queryKey: ['catalog'] });
       setDirty(false);
       navigate(`/listings/${saved.id}`, { replace: true });
     } catch (err) {
