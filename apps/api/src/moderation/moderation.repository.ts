@@ -2,9 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ListingStatus, ModerationQueueItem, Page, RiskLevel } from '@marketplace/shared';
+import { ListingStatus, ModerationQueueItem, Page, RejectedListingItem, RiskLevel } from '@marketplace/shared';
 import { Listing } from '../listings/listing.entity';
 import { buildPhotoUrl } from '../uploads/photo-url';
+import { decodeCursor, encodeCursor } from '../listings/cursor';
 import { decodeQueueCursor, encodeQueueCursor } from './queue-cursor';
 
 const QUEUE_LIMIT = { default: 24, max: 50 } as const;
@@ -42,6 +43,18 @@ interface QueueRow {
   risk_flags: string[] | null;
   risk_model: string | null;
   risk_evaluated_at: Date | null;
+}
+
+interface RejectedRow {
+  id: string;
+  title: string;
+  price: string;
+  condition: RejectedListingItem['condition'];
+  category: RejectedListingItem['category'];
+  rejection_reason: string;
+  raw_updated_at: string;
+  contributor_email: string;
+  primary_photo_key: string | null;
 }
 
 // Raw SQL, not QueryBuilder: the same tradeoff as loadPrimaryPhotos in
@@ -111,6 +124,44 @@ export class ModerationRepository {
     return { items: items.map((row) => this.toQueueItem(row)), nextCursor };
   }
 
+  // A record to browse, not a queue to work through — plain (updatedAt, id)
+  // keyset like the general catalog, not the risk-ranked one findQueue uses.
+  async findRejected(query: { cursor?: string; limit?: number }): Promise<Page<RejectedListingItem>> {
+    const limit = clampLimit(query.limit);
+    const conditions: string[] = [`l.status = 'REJECTED'`, `l.deleted_at IS NULL`];
+    const params: unknown[] = [];
+
+    if (query.cursor) {
+      const cursor = decodeCursor(query.cursor);
+      params.push(cursor.updatedAt, cursor.id);
+      const [updatedAtParam, idParam] = [params.length - 1, params.length];
+      conditions.push(`(l.updated_at, l.id) < ($${updatedAtParam}::timestamptz, $${idParam})`);
+    }
+
+    params.push(limit + 1);
+    const rows: RejectedRow[] = await this.repo.manager.query(
+      `SELECT l.id, l.title, l.price, l.condition, l.category, l.rejection_reason,
+              l.updated_at::text AS raw_updated_at,
+              u.email AS contributor_email,
+              (SELECT s3_key FROM listing_photos WHERE listing_id = l.id ORDER BY sort_order ASC LIMIT 1) AS primary_photo_key
+       FROM listings l
+       JOIN users u ON u.id = l.contributor_id
+       WHERE ${conditions.join(' AND ')}
+       ORDER BY l.updated_at DESC, l.id DESC
+       LIMIT $${params.length}`,
+      params,
+    );
+
+    const hasMore = rows.length > limit;
+    const items = rows.slice(0, limit);
+    const nextCursor =
+      hasMore && items.length > 0
+        ? encodeCursor({ updatedAt: items[items.length - 1].raw_updated_at, id: items[items.length - 1].id })
+        : null;
+
+    return { items: items.map((row) => this.toRejectedItem(row)), nextCursor };
+  }
+
   private toQueueItem(row: QueueRow): ModerationQueueItem {
     return {
       id: row.id,
@@ -121,6 +172,7 @@ export class ModerationRepository {
       category: row.category,
       // The query already filters to PENDING — every row here is one.
       status: ListingStatus.PENDING,
+      rejectionReason: null,
       contributorEmail: row.contributor_email,
       submittedAt: new Date(row.raw_created_at).toISOString(),
       risk: row.risk_level
@@ -132,6 +184,21 @@ export class ModerationRepository {
             evaluatedAt: row.risk_evaluated_at!.toISOString(),
           }
         : null,
+    };
+  }
+
+  private toRejectedItem(row: RejectedRow): RejectedListingItem {
+    return {
+      id: row.id,
+      title: row.title,
+      primaryPhotoUrl: row.primary_photo_key ? buildPhotoUrl(row.primary_photo_key, this.config) : null,
+      price: Number(row.price),
+      condition: row.condition,
+      category: row.category,
+      status: ListingStatus.REJECTED,
+      rejectionReason: row.rejection_reason,
+      contributorEmail: row.contributor_email,
+      rejectedAt: new Date(row.raw_updated_at).toISOString(),
     };
   }
 }

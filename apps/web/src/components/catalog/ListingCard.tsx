@@ -33,6 +33,9 @@ export function ListingCard({ listing, showStatus = false }: ListingCardProps) {
         <div className={styles.priceRow}>
           <span className={styles.price}>${listing.price.toLocaleString()}</span>
         </div>
+        {listing.status === ListingStatus.REJECTED && listing.rejectionReason && (
+          <p className={styles.rejectionReason}>{listing.rejectionReason}</p>
+        )}
       </div>
     </Card>
   );

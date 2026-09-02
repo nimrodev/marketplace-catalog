@@ -1,8 +1,23 @@
 import { useInfiniteQuery, useMutation, useQueryClient, type InfiniteData, type QueryClient } from '@tanstack/react-query';
-import type { ListingDetail, ModerationQueueItem, Page, RejectRequest, RiskLevel } from '@marketplace/shared';
+import type { ListingDetail, ModerationQueueItem, Page, RejectedListingItem, RejectRequest, RiskLevel } from '@marketplace/shared';
 import { apiClient } from './client';
 
 const QUEUE_KEY_PREFIX = ['moderation', 'queue'];
+const REJECTED_KEY = ['moderation', 'rejected'];
+
+function fetchRejectedListings(cursor: string | undefined): Promise<Page<RejectedListingItem>> {
+  const qs = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
+  return apiClient.get<Page<RejectedListingItem>>(`/moderation/rejected${qs}`);
+}
+
+export function useRejectedListingsQuery() {
+  return useInfiniteQuery({
+    queryKey: REJECTED_KEY,
+    queryFn: ({ pageParam }) => fetchRejectedListings(pageParam ?? undefined),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+  });
+}
 
 function moderationQueueKey(risk?: RiskLevel) {
   return [...QUEUE_KEY_PREFIX, risk] as const;
@@ -53,6 +68,7 @@ function restoreQueue(queryClient: QueryClient, snapshots: QueueSnapshot[]) {
 
 function invalidateAfterDecision(queryClient: QueryClient) {
   queryClient.invalidateQueries({ queryKey: QUEUE_KEY_PREFIX });
+  queryClient.invalidateQueries({ queryKey: REJECTED_KEY });
   queryClient.invalidateQueries({ queryKey: ['catalog'] });
 }
 

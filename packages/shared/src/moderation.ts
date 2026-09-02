@@ -15,6 +15,14 @@ export interface ModerationQueueItem extends ListingSummary {
   risk: ListingRisk | null;
 }
 
+// The moderator-facing rejected list — a record to browse, not a queue to
+// work through, so it carries no risk assessment and no approve/reject
+// affordance on the wire.
+export interface RejectedListingItem extends ListingSummary {
+  contributorEmail: string;
+  rejectedAt: string;
+}
+
 export interface RejectRequest {
   reason: string;
 }

@@ -21,6 +21,7 @@ export const mockListingSummary: ListingSummary = {
   condition: ListingCondition.GOOD,
   category: ListingCategory.SPORTS_OUTDOORS,
   status: ListingStatus.PUBLISHED,
+  rejectionReason: null,
 };
 
 export const mockCatalogPage: Page<ListingSummary> = {

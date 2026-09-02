@@ -246,6 +246,26 @@ describe('Catalog query (e2e)', () => {
       expect(ids).not.toContain(furnitureId);
     });
 
+    it('status filter, scoped to "mine", narrows to that status', async () => {
+      // idsFor never passes mineUserId — the "mine" branch is the only
+      // place a status filter does useful work, so it's exercised directly.
+      const page = await repo.findCatalogPage({ status: ListingStatus.REJECTED, limit: 50 }, contributorId);
+      const mineIds = page.items.map((l) => l.id);
+      expect(mineIds).toContain(rejectedMarkerId);
+      expect(mineIds).not.toContain(pendingMarkerId);
+    });
+
+    it('status filter without "mine" matches nothing outside PUBLISHED — no leak via the new field', async () => {
+      const ids = await idsFor({ status: ListingStatus.REJECTED });
+      expect(ids).not.toContain(rejectedMarkerId);
+    });
+
+    it('rejectionReason is carried on the summary for a rejected listing, null for everything else', async () => {
+      const page = await repo.findCatalogPage({ limit: 50 }, contributorId);
+      expect(page.items.find((l) => l.id === rejectedMarkerId)?.rejectionReason).toBe('x');
+      expect(page.items.find((l) => l.id === cheapId)?.rejectionReason).toBeNull();
+    });
+
     it('an unpublished listing never appears, under any filter combination', async () => {
       const combos: Parameters<ListingsRepository['findCatalogPage']>[0][] = [
         {},

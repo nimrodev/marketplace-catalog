@@ -1,11 +1,24 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MODERATION_LIMITS, type ModerationQueueItem } from '@marketplace/shared';
-import { useApproveListingMutation, useModerationQueueQuery, useRejectListingMutation } from '../api/moderation';
+import { MODERATION_LIMITS, type ModerationQueueItem, type RejectedListingItem } from '@marketplace/shared';
+import {
+  useApproveListingMutation,
+  useModerationQueueQuery,
+  useRejectedListingsQuery,
+  useRejectListingMutation,
+} from '../api/moderation';
+import { StatusTabs, type StatusTab } from '../components/catalog/StatusTabs';
 import { conditionLabel, conditionTone } from '../components/catalog/conditionTone';
 import { riskTone } from '../components/detail/labels';
 import { Badge, Button, EmptyState, Modal } from '../components/primitives';
 import styles from './ModerationQueuePage.module.css';
+
+type Tab = 'needs-review' | 'rejected';
+
+const TABS: StatusTab<Tab>[] = [
+  { value: 'needs-review', label: 'Needs review' },
+  { value: 'rejected', label: 'Rejected', tone: 'rejected' },
+];
 
 function RiskInfo({ risk }: { risk: ModerationQueueItem['risk'] }) {
   if (!risk) {
@@ -35,8 +48,41 @@ function RiskInfo({ risk }: { risk: ModerationQueueItem['risk'] }) {
   );
 }
 
+function RejectedRow({ item }: { item: RejectedListingItem }) {
+  return (
+    <div className={styles.row}>
+      <Link to={`/listings/${item.id}`} className={styles.photo}>
+        {item.primaryPhotoUrl && <img src={item.primaryPhotoUrl} alt={item.title} loading="lazy" />}
+      </Link>
+
+      <div className={styles.info}>
+        <Link to={`/listings/${item.id}`} className={styles.title}>
+          {item.title}
+        </Link>
+        <div className={styles.meta}>
+          <span>{item.contributorEmail}</span>
+          <span>${item.price.toLocaleString()}</span>
+          <Badge tone={conditionTone(item.condition)}>{conditionLabel(item.condition)}</Badge>
+          <span>Rejected {new Date(item.rejectedAt).toLocaleString()}</span>
+        </div>
+        <p className={styles.rejectionReason}>{item.rejectionReason}</p>
+      </div>
+
+      {/* Read-only by design — this is a record of a past decision, not a
+          second queue to work through. */}
+      <div className={styles.actions}>
+        <Button as={Link} to={`/listings/${item.id}`}>
+          View
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function ModerationQueuePage() {
+  const [tab, setTab] = useState<Tab>('needs-review');
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useModerationQueueQuery();
+  const rejected = useRejectedListingsQuery();
   const approve = useApproveListingMutation();
   const reject = useRejectListingMutation();
   const [rejectTarget, setRejectTarget] = useState<ModerationQueueItem | null>(null);
@@ -44,14 +90,7 @@ export default function ModerationQueuePage() {
   const [reasonError, setReasonError] = useState<string | null>(null);
 
   const items = data?.pages.flatMap((page) => page.items) ?? [];
-
-  if (isLoading) {
-    return <EmptyState title="Loading…" />;
-  }
-
-  if (items.length === 0) {
-    return <EmptyState title="Queue is clear" description="No pending listings need review right now." />;
-  }
+  const rejectedItems = rejected.data?.pages.flatMap((page) => page.items) ?? [];
 
   function openReject(item: ModerationQueueItem) {
     setRejectTarget(item);
@@ -73,45 +112,76 @@ export default function ModerationQueuePage() {
   return (
     <div>
       <h1 className={styles.heading}>Moderation queue</h1>
+      <StatusTabs tabs={TABS} active={tab} onChange={setTab} />
 
-      <div className={styles.list}>
-        {items.map((item) => (
-          <div key={item.id} className={styles.row}>
-            <Link to={`/listings/${item.id}`} className={styles.photo}>
-              {item.primaryPhotoUrl && <img src={item.primaryPhotoUrl} alt={item.title} loading="lazy" />}
-            </Link>
+      {tab === 'needs-review' ? (
+        isLoading ? (
+          <EmptyState title="Loading…" />
+        ) : items.length === 0 ? (
+          <EmptyState title="Queue is clear" description="No pending listings need review right now." />
+        ) : (
+          <>
+            <div className={styles.list}>
+              {items.map((item) => (
+                <div key={item.id} className={styles.row}>
+                  <Link to={`/listings/${item.id}`} className={styles.photo}>
+                    {item.primaryPhotoUrl && <img src={item.primaryPhotoUrl} alt={item.title} loading="lazy" />}
+                  </Link>
 
-            <div className={styles.info}>
-              <Link to={`/listings/${item.id}`} className={styles.title}>
-                {item.title}
-              </Link>
-              <div className={styles.meta}>
-                <span>{item.contributorEmail}</span>
-                <span>${item.price.toLocaleString()}</span>
-                <Badge tone={conditionTone(item.condition)}>{conditionLabel(item.condition)}</Badge>
-                <span>Submitted {new Date(item.submittedAt).toLocaleString()}</span>
+                  <div className={styles.info}>
+                    <Link to={`/listings/${item.id}`} className={styles.title}>
+                      {item.title}
+                    </Link>
+                    <div className={styles.meta}>
+                      <span>{item.contributorEmail}</span>
+                      <span>${item.price.toLocaleString()}</span>
+                      <Badge tone={conditionTone(item.condition)}>{conditionLabel(item.condition)}</Badge>
+                      <span>Submitted {new Date(item.submittedAt).toLocaleString()}</span>
+                    </div>
+                    <RiskInfo risk={item.risk} />
+                  </div>
+
+                  <div className={styles.actions}>
+                    <Button variant="primary" onClick={() => approve.mutate(item.id)} disabled={approve.isPending}>
+                      Approve
+                    </Button>
+                    <Button variant="danger" onClick={() => openReject(item)} disabled={reject.isPending}>
+                      Reject
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {hasNextPage && (
+              <div className={styles.loadMoreRow}>
+                <Button onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+                  {isFetchingNextPage ? 'Loading…' : 'Load more'}
+                </Button>
               </div>
-              <RiskInfo risk={item.risk} />
-            </div>
-
-            <div className={styles.actions}>
-              <Button variant="primary" onClick={() => approve.mutate(item.id)} disabled={approve.isPending}>
-                Approve
-              </Button>
-              <Button variant="danger" onClick={() => openReject(item)} disabled={reject.isPending}>
-                Reject
-              </Button>
-            </div>
+            )}
+          </>
+        )
+      ) : rejected.isLoading ? (
+        <EmptyState title="Loading…" />
+      ) : rejectedItems.length === 0 ? (
+        <EmptyState title="No rejected listings" description="Nothing has been rejected yet." />
+      ) : (
+        <>
+          <div className={styles.list}>
+            {rejectedItems.map((item) => (
+              <RejectedRow key={item.id} item={item} />
+            ))}
           </div>
-        ))}
-      </div>
 
-      {hasNextPage && (
-        <div className={styles.loadMoreRow}>
-          <Button onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
-            {isFetchingNextPage ? 'Loading…' : 'Load more'}
-          </Button>
-        </div>
+          {rejected.hasNextPage && (
+            <div className={styles.loadMoreRow}>
+              <Button onClick={() => rejected.fetchNextPage()} disabled={rejected.isFetchingNextPage}>
+                {rejected.isFetchingNextPage ? 'Loading…' : 'Load more'}
+              </Button>
+            </div>
+          )}
+        </>
       )}
 
       <Modal open={rejectTarget !== null} onClose={() => setRejectTarget(null)} title="Reject listing">

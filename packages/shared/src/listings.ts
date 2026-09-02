@@ -22,6 +22,10 @@ export interface ListingSummary {
   condition: ListingCondition;
   category: ListingCategory;
   status: ListingStatus;
+  // Set only when status is REJECTED; null otherwise. Carried at the
+  // summary level (not just on ListingDetail) so a rejected-listings list
+  // can show why without a click into every row.
+  rejectionReason: string | null;
 }
 
 export interface ListingDetail extends Omit<ListingSummary, 'primaryPhotoUrl'> {
@@ -30,7 +34,6 @@ export interface ListingDetail extends Omit<ListingSummary, 'primaryPhotoUrl'> {
   minPrice: number | null;
   options: ListingOption[];
   photos: ListingPhoto[];
-  rejectionReason: string | null;
   contributorId: string;
   createdAt: string;
   updatedAt: string;
@@ -55,6 +58,11 @@ export interface CatalogQuery {
   // visible outside moderation. Requires auth; ignores every other viewer's
   // usual PUBLISHED-only scoping rather than composing with it.
   mine?: boolean;
+  // Narrows within whatever the viewer can already see — it never widens
+  // access. Combined with the public (non-`mine`) PUBLISHED-only scope, a
+  // non-PUBLISHED status simply matches nothing; it only does useful work
+  // alongside `mine`.
+  status?: ListingStatus;
 }
 
 export interface CreateListingRequest {

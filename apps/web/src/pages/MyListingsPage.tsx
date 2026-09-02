@@ -1,16 +1,28 @@
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { ListingStatus } from '@marketplace/shared';
 import { useCatalogQuery } from '../api/listings';
 import { FilterBar } from '../components/catalog/FilterBar';
 import { ListingCard } from '../components/catalog/ListingCard';
+import { StatusTabs, type StatusTab } from '../components/catalog/StatusTabs';
 import { useCatalogFilters } from '../components/catalog/useCatalogFilters';
 import { Button, EmptyState, Skeleton } from '../components/primitives';
 import styles from './CatalogPage.module.css';
 
 const SKELETON_COUNT = 4;
 
+type Tab = ListingStatus | 'ALL';
+
+const TABS: StatusTab<Tab>[] = [
+  { value: 'ALL', label: 'All' },
+  { value: ListingStatus.PENDING, label: 'Pending' },
+  { value: ListingStatus.PUBLISHED, label: 'Published' },
+  { value: ListingStatus.REJECTED, label: 'Rejected', tone: 'rejected' },
+];
+
 export default function MyListingsPage() {
-  const { filters } = useCatalogFilters();
+  const { filters, updateFilters } = useCatalogFilters();
+  const activeTab = filters.status ?? 'ALL';
   const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } = useCatalogQuery({
     ...filters,
     mine: true,
@@ -28,11 +40,19 @@ export default function MyListingsPage() {
   }, [hasNextPage, fetchNextPage]);
 
   const items = data?.pages.flatMap((page) => page.items) ?? [];
-  const hasFilters = Object.keys(filters).length > 0;
+  // Status is a tab, not one of the filters this message is about — a
+  // narrow status tab alone shouldn't read as "your filters excluded
+  // everything," it's just an empty bucket.
+  const hasOtherFilters = Object.keys(filters).some((key) => key !== 'status');
 
   return (
     <div>
       <h1>My listings</h1>
+      <StatusTabs
+        tabs={TABS}
+        active={activeTab}
+        onChange={(value) => updateFilters({ status: value === 'ALL' ? undefined : value })}
+      />
       <FilterBar />
 
       {isLoading ? (
@@ -49,8 +69,10 @@ export default function MyListingsPage() {
           ))}
         </div>
       ) : items.length === 0 ? (
-        hasFilters ? (
+        hasOtherFilters ? (
           <EmptyState title="No listings match your filters" description="Try widening your search or clearing a filter." />
+        ) : activeTab !== 'ALL' ? (
+          <EmptyState title={`No ${activeTab.toLowerCase()} listings`} description="Nothing in this status right now." />
         ) : (
           <EmptyState
             title="You haven't submitted anything yet"

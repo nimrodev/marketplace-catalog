@@ -72,6 +72,15 @@
   color: var(--text-faint);
 }
 
+.rejectionReason {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--risk-high-soft);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  color: var(--risk-high-strong);
+}
+
 .flagRow {
   display: flex;
   flex-wrap: wrap;

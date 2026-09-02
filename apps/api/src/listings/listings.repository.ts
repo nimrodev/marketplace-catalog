@@ -84,6 +84,9 @@ function applyFilters(qb: SelectQueryBuilder<Listing>, query: CatalogQuery): Sel
   if (query.negotiable !== undefined) {
     qb.andWhere('listing.isNegotiable = :negotiable', { negotiable: query.negotiable });
   }
+  if (query.status) {
+    qb.andWhere('listing.status = :status', { status: query.status });
+  }
   return qb;
 }
 
@@ -96,6 +99,7 @@ function toSummary(listing: Listing, primaryPhotoUrl: string | null): ListingSum
     condition: listing.condition,
     category: listing.category,
     status: listing.status,
+    rejectionReason: listing.rejectionReason,
   };
 }
 

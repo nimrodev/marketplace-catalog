@@ -1,5 +1,5 @@
 import { useSearchParams } from 'react-router-dom';
-import { ListingCategory, ListingCondition, ListingOption, type CatalogQuery } from '@marketplace/shared';
+import { ListingCategory, ListingCondition, ListingOption, ListingStatus, type CatalogQuery } from '@marketplace/shared';
 
 export type CatalogFilters = Omit<CatalogQuery, 'cursor' | 'limit'>;
 export type FilterKey = keyof CatalogFilters;
@@ -38,6 +38,11 @@ function parseFilters(params: URLSearchParams): CatalogFilters {
 
   if (params.get('negotiable') === 'true') {
     filters.negotiable = true;
+  }
+
+  const status = params.get('status');
+  if (status && isEnumValue(ListingStatus, status)) {
+    filters.status = status;
   }
 
   return filters;

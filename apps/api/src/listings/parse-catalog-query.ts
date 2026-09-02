@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { CatalogQuery, ListingCategory, ListingCondition, ListingOption } from '@marketplace/shared';
+import { CatalogQuery, ListingCategory, ListingCondition, ListingOption, ListingStatus } from '@marketplace/shared';
 
 // Hand-rolled, not a class-validator DTO: MAR-16 (the DTO/validation
 // layer) is a separate, later issue scoped to write requests. This is
@@ -43,6 +43,10 @@ export function parseCatalogQuery(raw: Record<string, unknown>): CatalogQuery {
 
   if (raw.mine !== undefined) {
     query.mine = parseBoolean(raw.mine, 'mine');
+  }
+
+  if (raw.status !== undefined) {
+    query.status = parseEnum(raw.status, ListingStatus, 'status');
   }
 
   return query;

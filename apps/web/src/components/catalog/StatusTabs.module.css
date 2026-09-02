@@ -1,0 +1,36 @@
+.tabrow {
+  display: flex;
+  gap: var(--space-1);
+  background: var(--surface-2);
+  padding: var(--space-1);
+  border-radius: var(--radius-pill);
+  margin-bottom: var(--space-4);
+  width: fit-content;
+}
+
+.tab {
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.tab:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.active {
+  background: var(--surface);
+  color: var(--accent-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.rejectedActive {
+  color: var(--risk-high-strong);
+}

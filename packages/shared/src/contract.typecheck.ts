@@ -21,6 +21,7 @@ import {
   Page,
   PresignRequest,
   PresignResponse,
+  RejectedListingItem,
   RejectRequest,
   RiskLevel,
   UpdateListingRequest,
@@ -35,6 +36,7 @@ const listingSummary: ListingSummary = {
   condition: ListingCondition.GOOD,
   category: ListingCategory.SPORTS_OUTDOORS,
   status: ListingStatus.PUBLISHED,
+  rejectionReason: null,
 };
 
 const listingDetail: ListingDetail = {
@@ -44,7 +46,6 @@ const listingDetail: ListingDetail = {
   minPrice: 100,
   options: [ListingOption.LOCAL_PICKUP, ListingOption.DELIVERY_AVAILABLE],
   photos: [{ url: listingSummary.primaryPhotoUrl!, key: 'listings/user-1/photo-0.jpg', sortOrder: 0 }],
-  rejectionReason: null,
   contributorId: 'user-1',
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
@@ -68,6 +69,7 @@ const catalogQuery: CatalogQuery = {
   category: ListingCategory.SPORTS_OUTDOORS,
   options: [ListingOption.LOCAL_PICKUP],
   negotiable: true,
+  status: ListingStatus.REJECTED,
 };
 
 const createListingRequest: CreateListingRequest = {
@@ -114,6 +116,14 @@ const moderationQueueItem: ModerationQueueItem = {
   risk: null,
 };
 
+const rejectedListingItem: RejectedListingItem = {
+  ...listingSummary,
+  status: ListingStatus.REJECTED,
+  rejectionReason: 'Description does not match photos.',
+  contributorEmail: 'seller@example.com',
+  rejectedAt: new Date().toISOString(),
+};
+
 const rejectRequest: RejectRequest = {
   reason: 'Description does not match photos.',
 };
@@ -149,6 +159,7 @@ void [
   presignResponse,
   authUser,
   moderationQueueItem,
+  rejectedListingItem,
   rejectRequest,
   draftRequest,
   draftResponse,
